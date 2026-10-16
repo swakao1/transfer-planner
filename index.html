@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>COM Transfer Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@600;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: header, choose bar, summary band with 120-hour bar, then two columns — your courses | degree plan (tap a course in the plan to add it) */
+:root{
+  --bg:#F3F6F7; --surface:#FFFFFF; --line:#D7E0E3; --ink:#15232A; --muted:#55666E;
+  --accent:#0B6E6E; --accent-soft:#DDF0EE; --com:#D08C10; --com-soft:#FBEFD6;
+  --uhcl:#3B4C9E; --uhcl-soft:#E3E7F7; --warn:#A8461C; --warn-soft:#FBE6DC;
+  --f-display:"Libre Franklin","Segoe UI",system-ui,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1719; --surface:#172225; --line:#2A3A3F; --ink:#E5EEF0; --muted:#97A9AF;
+  --accent:#4FC2BB; --accent-soft:#16383A; --com:#E9AE45; --com-soft:#3A2D12;
+  --uhcl:#8F9EEA; --uhcl-soft:#1F2647; --warn:#F08C5E; --warn-soft:#3B2117; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1719; --surface:#172225; --line:#2A3A3F; --ink:#E5EEF0; --muted:#97A9AF;
+  --accent:#4FC2BB; --accent-soft:#16383A; --com:#E9AE45; --com-soft:#3A2D12;
+  --uhcl:#8F9EEA; --uhcl-soft:#1F2647; --warn:#F08C5E; --warn-soft:#3B2117; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{padding-block:28px 18px}
+.eyebrow{font:600 12px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:800 clamp(26px,4vw,36px)/1.1 var(--f-display);margin:8px 0 6px;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:62ch}
+h2{font:700 18px/1.2 var(--f-display);margin:0;text-wrap:balance;display:flex;align-items:center;gap:10px}
+.num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--surface);font:700 13px/1 var(--f-display);flex:none}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.choose{display:grid;grid-template-columns:auto 1fr 1fr;gap:14px;align-items:end}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+label,.lbl{font:600 12px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+select,input[type=text]{font:500 15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.summary{margin-top:16px;display:grid;gap:16px}
+.figs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.fig{padding:12px 14px;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;gap:4px;min-width:0}
+.fig b{font:800 30px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.fig span{font-size:13px;color:var(--muted)}
+.fig small{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.fig.a b,.fig.a small{color:var(--accent)} .fig.c b,.fig.c small{color:var(--com)} .fig.u b,.fig.u small{color:var(--uhcl)}
+.bar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+.bar i{display:block;height:100%;transition:width .35s ease}
+.bar .s1{background:var(--accent)} .bar .s2{background:repeating-linear-gradient(135deg,var(--com) 0 6px,var(--com-soft) 6px 11px)} .bar .s3{background:var(--uhcl)}
+.ticks{display:flex;justify-content:space-between;font:500 12px var(--f-mono);color:var(--muted);margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;margin-top:16px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:14px}
+.example{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--com-soft);border-radius:8px;padding:10px 12px;font-size:14px}
+.addrow{display:flex;gap:8px}
+.addrow input{flex:1;min-width:0;font-family:var(--f-mono);text-transform:uppercase}
+button{font:600 14px var(--f-body);cursor:pointer;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);padding:9px 14px}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.err{color:var(--warn);font-size:13px;min-height:1em;margin:0}
+.clist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.clist li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.code{font:500 13px var(--f-mono);white-space:nowrap}
+.ttl{font-size:14px;min-width:0;overflow-wrap:anywhere}
+.ttl em{display:block;font-style:normal;font-size:12px;color:var(--muted)}
+.hrs{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.x{background:none;border:none;color:var(--muted);padding:4px 6px;font-size:18px;line-height:1}
+.tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.t-core{background:var(--accent-soft);color:var(--accent)} .t-fos{background:var(--uhcl-soft);color:var(--uhcl)} .t-el{background:var(--com-soft);color:var(--com)} .t-no{background:var(--warn-soft);color:var(--warn)}
+.empty{color:var(--muted);font-size:14px;margin:6px 0 0}
+.plan-sec{display:flex;flex-direction:column;gap:2px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 0 6px;border-bottom:2px solid var(--ink)}
+.sec-h h3{font:700 15px/1.2 var(--f-display);margin:0}
+.sec-h span{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums}
+.req{padding:12px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:4px 10px;align-items:start}
+.dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);margin-top:3px}
+.req.done .dot{background:var(--accent);border-color:var(--accent);box-shadow:inset 0 0 0 3px var(--surface)}
+.req.part .dot{border-color:var(--com);background:linear-gradient(90deg,var(--com) 50%,transparent 50%)}
+.req h4{margin:0;font:600 15px/1.3 var(--f-body)}
+.req .meta{font:500 13px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.req p{grid-column:2/4;margin:0;font-size:13px;color:var(--muted)}
+.chips{grid-column:2/4;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font:500 12px var(--f-mono);padding:5px 9px;border-radius:99px;background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.need{grid-column:2/4;font-size:13px;color:var(--com);font-weight:600}
+.notes{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.notes a{color:var(--accent)}
+footer{padding-block:20px 36px}
+@media (max-width:860px){.cols{grid-template-columns:1fr}.figs{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.choose{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">College of the Mainland · Transfer Planning</div>
+    <h1>Plan your transfer to a bachelor's degree</h1>
+    <p class="sub">Choose a university and major, add the courses you have passed at COM, and see how many hours transfer and how many you will still need for the degree.</p>
+  </header>
+
+  <section class="panel">
+    <div class="choose">
+      <h2><span class="num">1</span>Choose</h2>
+      <div class="field"><label for="uni">University</label><select id="uni"></select></div>
+      <div class="field"><label for="major">Major</label><select id="major"></select></div>
+    </div>
+  </section>
+
+  <section class="panel summary" aria-live="polite">
+    <div class="figs">
+      <div class="fig"><small>You entered</small><b id="fEntered">0</b><span>college hours</span></div>
+      <div class="fig a"><small>Counts toward degree</small><b id="fApplied">0</b><span id="fAppliedSub">of 75 transferable</span></div>
+      <div class="fig c"><small>Still possible at COM</small><b id="fCom">0</b><span>more hours that can transfer</span></div>
+      <div class="fig u"><small>Left for the degree</small><b id="fLeft">0</b><span id="fLeftSub">of 120 hours</span></div>
+    </div>
+    <div>
+      <div class="bar" role="img" id="bar" aria-label=""><i class="s1" id="b1"></i><i class="s2" id="b2"></i><i class="s3" id="b3"></i></div>
+      <div class="ticks"><span>0</span><span id="tMid">60</span><span id="tEnd">120 hrs</span></div>
+    </div>
+    <div class="legend">
+      <span style="--c:var(--accent)">Already counts</span>
+      <span style="--c:var(--com)">Can still take at COM</span>
+      <span style="--c:var(--uhcl)" id="lgU">At UHCL (at least 45)</span>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section class="panel stack">
+      <h2><span class="num">2</span>Courses you passed</h2>
+      <div class="example" id="exampleBar" hidden>
+        <span>Showing an example student. Clear it to enter your own courses.</span>
+        <button class="ghost" id="clearBtn" type="button">Clear example</button>
+      </div>
+      <form id="addForm" class="stack" style="gap:6px" autocomplete="off">
+        <label for="addInput">Add a course by number</label>
+        <div class="addrow">
+          <input id="addInput" type="text" list="courseList" placeholder="e.g. PSYC 2301" aria-describedby="addErr">
+          <button type="submit">Add</button>
+        </div>
+        <datalist id="courseList"></datalist>
+        <p class="err" id="addErr"></p>
+      </form>
+      <p class="empty" style="margin:0">Or tap any course in the degree plan to add it. Only list courses you passed with a C or better.</p>
+      <ul class="clist" id="clist"></ul>
+      <p class="empty" id="clistEmpty" hidden>No courses yet.</p>
+      <div style="display:flex;justify-content:flex-end"><button class="ghost" id="resetBtn" type="button">Remove all</button></div>
+    </section>
+
+    <section class="panel">
+      <h2><span class="num">3</span><span id="planTitle">Degree plan</span></h2>
+      <div id="plan"></div>
+    </section>
+  </div>
+
+  <section class="panel notes" style="margin-top:16px">
+    <span class="lbl">Before you rely on this</span>
+    <ul id="notes"></ul>
+  </section>
+
+  <footer class="notes">
+    <span>This is a planning estimate, not an official evaluation. The university makes the final decision on transfer credit. Review your plan with a COM advisor and the university's transfer advisor.</span>
+  </footer>
+</div>
+
+<script>
+const T = {
+ "ENGL 1301":"Composition I","ENGL 1302":"Composition II","ENGL 2311":"Technical & Business Writing",
+ "ENGL 2322":"British Literature I","ENGL 2323":"British Literature II","ENGL 2327":"American Literature I","ENGL 2328":"American Literature II","ENGL 2332":"World Literature I","ENGL 2333":"World Literature II","ENGL 2341":"Forms of Literature","ENGL 2351":"Mexican-American Literature",
+ "MATH 1314":"College Algebra","MATH 1324":"Math for Business & Social Sciences","MATH 1325":"Calculus for Business & Social Sciences","MATH 1332":"Contemporary Mathematics","MATH 1342":"Elementary Statistical Methods","MATH 2412":"Pre-Calculus","MATH 2413":"Calculus I",
+ "ASTR 1403":"Stars and Galaxies","ASTR 1404":"Solar System","BIOL 1406":"Biology for Science Majors I","BIOL 1407":"Biology for Science Majors II","BIOL 1408":"Biology for Non-Science Majors I","BIOL 1409":"Biology for Non-Science Majors II","BIOL 2401":"Anatomy & Physiology I","BIOL 2402":"Anatomy & Physiology II",
+ "CHEM 1405":"Introductory Chemistry I","CHEM 1406":"Introductory Chemistry (Allied Health)","CHEM 1411":"General Chemistry I","CHEM 1412":"General Chemistry II","ENVR 1401":"Environmental Science","GEOL 1403":"Physical Geology","GEOL 1404":"Historical Geology","GEOL 1445":"Oceanography","GEOL 1447":"Meteorology",
+ "PHYS 1401":"College Physics I","PHYS 1402":"College Physics II","PHYS 1410":"Elementary Physics","PHYS 2425":"University Physics I","PHYS 2426":"University Physics II",
+ "HUMA 1301":"Introduction to Humanities I","HUMA 1302":"Introduction to Humanities II","PHIL 1301":"Introduction to Philosophy","PHIL 1304":"Introduction to World Religions","PHIL 2306":"Introduction to Ethics","SPAN 2311":"Intermediate Spanish I","SPAN 2312":"Intermediate Spanish II",
+ "ARTS 1301":"Art Appreciation","ARTS 1303":"Art History I","ARTS 1304":"Art History II","ARTS 1313":"Foundations of Art","DRAM 1310":"Theater Appreciation","DRAM 2366":"Introduction to Cinema","MUSI 1306":"Music Appreciation","MUSI 1307":"Music Literature","MUSI 1310":"American Music",
+ "HIST 1301":"United States History I","HIST 1302":"United States History II","HIST 2301":"Texas History",
+ "GOVT 2305":"Federal Government","GOVT 2306":"Texas Government",
+ "PSYC 1300":"Learning Framework","EDUC 1300":"Learning Framework","PHED 1164":"Introduction to Physical Fitness & Wellness",
+ "PSYC 2301":"General Psychology","PSYC 2314":"Lifespan Growth & Development","PSYC 2317":"Statistical Methods in Psychology","PSYC 2319":"Social Psychology",
+ "EDUC 1301":"Introduction to the Teaching Profession","EDUC 2301":"Introduction to Special Populations","MATH 1350":"Mathematics for Teachers I","MATH 1351":"Mathematics for Teachers II","TECA 1354":"Child Growth & Development","TECA 1311":"Educating Young Children",
+ "PSYC 2306":"Human Sexuality","PSYC 2308":"Child Psychology","PSYC 2315":"Psychology of Adjustment","PSYC 2316":"Psychology of Personality","PSYC 2320":"Abnormal Psychology","PSYC 2330":"Biological Psychology",
+ "SOCI 1301":"Introduction to Sociology","SOCI 1306":"Social Problems","ECON 2301":"Principles of Macroeconomics","ECON 2302":"Principles of Microeconomics","SPCH 1315":"Public Speaking","SPCH 1318":"Interpersonal Communication"
+};
+
+/* COM core lists (COM catalog, Core Curriculum) */
+const COM = {
+  math:["MATH 1314","MATH 1324","MATH 1325","MATH 1332","MATH 1342","MATH 2412","MATH 2413"],
+  lps:["ASTR 1403","ASTR 1404","BIOL 1406","BIOL 1407","BIOL 1408","BIOL 1409","BIOL 2401","BIOL 2402","CHEM 1405","CHEM 1406","CHEM 1411","CHEM 1412","ENVR 1401","GEOL 1403","GEOL 1404","GEOL 1445","GEOL 1447","PHYS 1401","PHYS 1402","PHYS 1410","PHYS 2425","PHYS 2426"],
+  lpc:["ENGL 2322","ENGL 2323","ENGL 2327","ENGL 2328","ENGL 2332","ENGL 2333","ENGL 2341","ENGL 2351","HUMA 1301","HUMA 1302","PHIL 1301","PHIL 1304","PHIL 2306","SPAN 2311","SPAN 2312"],
+  ca:["ARTS 1301","ARTS 1303","ARTS 1304","ARTS 1313","DRAM 1310","DRAM 2366","MUSI 1306","MUSI 1307","MUSI 1310"],
+  hist:["HIST 1301","HIST 1302","HIST 2301"],
+  sbs:["ECON 2301","ECON 2302","PSYC 2301","PSYC 2314","SOCI 1301","SOCI 1306"]
+};
+
+/* Plans: add more universities or majors here. Each group lists its slots; a slot accepts listed codes and/or a pattern. */
+const PLANS = {
+ uhcl:{ name:"University of Houston–Clear Lake", short:"UHCL", majors:{
+  psyc_bs:{ name:"Psychology, B.S.", total:120, cap:75, upper:48, elecMax:18, elecRec:6,
+   sections:[
+    {name:"Texas Core Curriculum", hours:42, kind:"core", groups:[
+     {name:"Communication", hours:6, slots:[{any:["ENGL 1301"]},{any:["ENGL 1302","ENGL 2311"]}], note:"ENGL 1301, plus ENGL 1302 or 2311. Grade of C- or higher."},
+     {name:"Mathematics", hours:3, slots:[{any:COM.math}], note:"UHCL recommends MATH 1342 Elementary Statistics."},
+     {name:"Life & Physical Sciences", hours:8, slots:[{any:COM.lps},{any:COM.lps}], note:"Two 4-hour lab sciences."},
+     {name:"Language, Philosophy & Culture", hours:3, slots:[{any:COM.lpc}]},
+     {name:"Creative Arts", hours:3, slots:[{any:COM.ca}]},
+     {name:"American History", hours:6, slots:[{any:COM.hist},{any:COM.hist}]},
+     {name:"Government / Political Science", hours:6, slots:[{any:["GOVT 2305"]},{any:["GOVT 2306"]}]},
+     {name:"Social & Behavioral Sciences", hours:3, slots:[{any:["PSYC 2301"]}], note:"For this major, take PSYC 2301 General Psychology."},
+     {name:"Component Area Option", hours:4, slots:[{any:["PSYC 1300","EDUC 1300"]},{any:["PHED 1164"]}], note:"At COM: PSYC 1300 or EDUC 1300, plus PHED 1164."}
+    ]},
+    {name:"Psychology Field of Study", hours:15, kind:"fos", groups:[
+     {name:"Statistics", hours:3, slots:[{any:["PSYC 2317","MATH 1342"]}], note:"PSYC 2317 or MATH 1342. Grade of C or higher in all Field of Study courses."},
+     {name:"Lifespan Growth & Development", hours:3, slots:[{any:["PSYC 2314"]}]},
+     {name:"Social Psychology", hours:3, slots:[{any:["PSYC 2319"]}]},
+     {name:"Psychology directed electives", hours:6, show:["PSYC 2306","PSYC 2308","PSYC 2315","PSYC 2316","PSYC 2320","PSYC 2330"],
+      slots:[{re:/^PSYC 2\d{3}$/,not:["PSYC 2301","PSYC 2314","PSYC 2317","PSYC 2319"]},{re:/^PSYC 2\d{3}$/,not:["PSYC 2301","PSYC 2314","PSYC 2317","PSYC 2319"]}],
+      note:"Any two other 2000-level PSYC courses."}
+    ]}
+   ],
+   electiveShow:["SPCH 1315","SPCH 1318","SOCI 1301","SOCI 1306","ECON 2301","ECON 2302"],
+   notes:[
+    "UHCL accepts up to 75 transfer hours for this degree: 42 core, 15 Field of Study, and up to 18 general elective hours.",
+    "UHCL suggests transferring no more than 6 elective hours, so you have room for a 15–18 hour minor at UHCL.",
+    "The degree is 120 hours. UHCL's guide also lists 48 upper-level hours to complete at UHCL, so if you transfer the full 75, your total may run a little over 120. Confirm with a UHCL transfer advisor.",
+    "Courses taken at COM count only if they are college-level (1000 or 2000 numbers). Developmental courses do not transfer."
+   ],
+   sources:[["UHCL Psychology B.S. Transfer Guide","https://www.uhcl.edu/academics/advising/transfer/documents/human-sciences-humanities/psyc-bs-uhcl-transfer-guide.pdf"],["COM Core Curriculum","https://com-preview.courseleaf.com/degrees-and-programs/core-curriculum"]]
+  }
+ }},
+ twu:{ name:"Texas Woman's University", short:"TWU", majors:{
+  ec6:{ name:"Education B.S., EC-6 Core Subjects (from COM's AAT EC-6)", total:122, elecMax:0,
+   sections:[
+    {name:"Texas Core Curriculum", hours:42, kind:"core", groups:[
+     {name:"Communication", hours:6, slots:[{any:["ENGL 1301"]},{any:["ENGL 1302","ENGL 2311"]}], note:"ENGL 1301 and ENGL 1302. Grade of C or higher in ENGL 1301."},
+     {name:"Mathematics", hours:3, slots:[{any:["MATH 1314"]}], note:"Take MATH 1314 College Algebra. It is required for the EC-6 Field of Study. Grade of C or higher."},
+     {name:"Life & Physical Sciences", hours:8, slots:[{any:COM.lps},{any:COM.lps}], note:"Two 4-hour lab sciences. Future EC-6 teachers often take one life science and one earth or physical science."},
+     {name:"Language, Philosophy & Culture", hours:3, slots:[{any:COM.lpc}]},
+     {name:"Creative Arts", hours:3, slots:[{any:COM.ca}]},
+     {name:"American History", hours:6, slots:[{any:COM.hist},{any:COM.hist}], note:"HIST 1301 and 1302 match TWU's HIST 1013 and 1023."},
+     {name:"Government / Political Science", hours:6, slots:[{any:["GOVT 2305"]},{any:["GOVT 2306"]}]},
+     {name:"Social & Behavioral Sciences", hours:3, slots:[{any:COM.sbs}]},
+     {name:"Component Area Option", hours:4, slots:[{any:["PSYC 1300","EDUC 1300"]},{any:["PHED 1164"]}], note:"At COM: PSYC 1300 or EDUC 1300, plus PHED 1164. EDUC 1300 matches TWU's first-year seminar."}
+    ]},
+    {name:"AAT EC-6 courses that count in TWU's major", hours:25, kind:"fos", groups:[
+     {name:"Introduction to the Teaching Profession", hours:3, slots:[{any:["EDUC 1301"]}], note:"Counts as TWU EDUC 2003. Grade of C or higher is required for admission to teacher education. Includes field observation."},
+     {name:"Introduction to Special Populations", hours:3, slots:[{any:["EDUC 2301"]}], note:"Counts as TWU EDUC 2303. Includes field observation."},
+     {name:"Mathematics for Teachers I & II", hours:6, slots:[{any:["MATH 1350"]},{any:["MATH 1351"]}], note:"Count as TWU MATH 1523 and MATH 1533."},
+     {name:"Child Growth & Development", hours:3, slots:[{any:["TECA 1354"]}], note:"Counts as TWU HDFS 2513 Early Childhood Development."},
+     {name:"Educating Young Children", hours:3, slots:[{any:["TECA 1311"]}], note:"Counts as TWU ECE 2663 Foundations of Early Childhood Education."},
+     {name:"Texas History", hours:3, slots:[{any:["HIST 2301"]}], note:"Counts as TWU HIST 2713. If you used HIST 2301 in the core, take another history course here."},
+     {name:"Additional science", hours:4, slots:[{any:COM.lps}], note:"TWU requires one more life or physical science beyond the core."}
+    ]}
+   ],
+   electiveShow:[],
+   notes:[
+    "COM and TWU started an EC-6 teacher pathway in fall 2026. TWU faculty teach the upper-level courses on COM's Texas City campus.",
+    "TWU's degree is 122 hours: the 42-hour core plus 80 hours in the major. TWU's plan has no free electives, so courses outside the plan are not counted here.",
+    "A completed Texas core transfers as a block to any Texas public university, even where COM and TWU fill a core area with different courses.",
+    "Admission to TWU's teacher education program requires a 2.75 cumulative GPA, TSI requirements met, and EDUC 1301 with a C or higher, plus an application and interview.",
+    "TWU's catalog does not state a maximum number of transfer hours for this degree. This planner counts only courses that match TWU's degree plan.",
+    "The COM course list follows the statewide EC-6 Field of Study and TWU's published course equivalents. Check it against COM's current AAT EC-6 degree plan."
+   ],
+   sources:[["TWU Education B.S. (EC-6 Core Subjects), 2026–27 catalog","https://catalog.twu.edu/undergraduate/professional-education/education/education-bs-ec-6-core-subjects/"],["COM–TWU teacher pathway (Galveston County Daily News)","https://www.galvnews.com/news/college-of-the-mainland-texas-woman-s-university-create-new-teacher-pathway/article_7f9a1c70-cd91-4cbc-a709-4d4e594403ca.html"],["EC-6 Field of Study (statewide)","https://catalog.austincc.edu/academic-planning/texas-transfer-framework/education-ec-6-core-subject-area-field-of-study/"],["COM Core Curriculum","https://com-preview.courseleaf.com/degrees-and-programs/core-curriculum"]]
+  }
+ }}
+};
+const capOf = p => p.cap ?? (p.sections.reduce((a,s)=>a+s.hours,0) + p.elecMax);
+
+const EXAMPLE = ["ENGL 1301","ENGL 1302","MATH 1314","HIST 1301","PSYC 1300","PSYC 2301","GOVT 2305","BIOL 1408","SPCH 1315","ARTS 1301"];
+const KEY = "com-transfer-planner";
+let state = { uni:"uhcl", major:"psyc_bs", courses:[...EXAMPLE], example:true };
+try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && Array.isArray(s.courses)) state = {...state, ...s}; }catch(e){}
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} };
+
+const $ = id => document.getElementById(id);
+const hrs = c => { const m = c.match(/ (\d)(\d)\d\d$/); return m ? +m[2] : 0; };
+const collegeLevel = c => /^[A-Z]{3,4} [12]\d{3}$/.test(c);
+const norm = s => { const m = s.toUpperCase().replace(/[^A-Z0-9]/g,"").match(/^([A-Z]{3,4})(\d{4})$/); return m ? m[1]+" "+m[2] : null; };
+const fits = (slot,c) => (slot.any && slot.any.includes(c)) || (slot.re && slot.re.test(c) && !(slot.not||[]).includes(c));
+const plan = () => PLANS[state.uni].majors[state.major];
+
+function evaluate(){
+  const p = plan(), slots = [];
+  p.sections.forEach((sec,si)=>sec.groups.forEach((g,gi)=>g.slots.forEach(s=>slots.push({...s,si,gi,kind:sec.kind}))));
+  const courses = state.courses.filter(collegeLevel);
+  const owner = new Map(); // course -> slot index
+  const tryAssign = (si, seen) => {
+    for(const c of courses){
+      if(!fits(slots[si],c) || seen.has(c)) continue;
+      seen.add(c);
+      if(!owner.has(c) || tryAssign(owner.get(c), seen)){ owner.set(c, si); return true; }
+    }
+    return false;
+  };
+  slots.forEach((_,i)=>tryAssign(i,new Set()));
+  const result = {}; let core=0, fos=0, elec=0;
+  for(const c of state.courses){
+    if(!collegeLevel(c)){ result[c]={tag:"no",label:"Not college-level"}; continue; }
+    if(owner.has(c)){ const s=slots[owner.get(c)]; const g=p.sections[s.si].groups[s.gi];
+      result[c]={tag:s.kind,label:g.name,si:s.si,gi:s.gi};
+      if(s.kind==="core") core+=hrs(c); else fos+=hrs(c); continue; }
+    if(elec + hrs(c) <= p.elecMax){ elec+=hrs(c); result[c]={tag:"el",label:"General elective"}; }
+    else result[c]={tag:"no",label:p.elecMax ? "Over the elective limit" : "Not part of this degree plan"};
+  }
+  const applied = Math.min(core+fos+elec, capOf(p));
+  return {result, core, fos, elec, applied, slots, owner};
+}
+
+function chip(c){
+  const on = state.courses.includes(c);
+  return `<button type="button" class="chip" data-c="${c}" aria-pressed="${on}" title="${T[c]||c}">${c}</button>`;
+}
+
+function render(){
+  const p = plan(), u = PLANS[state.uni], ev = evaluate();
+  const entered = state.courses.filter(collegeLevel).reduce((a,c)=>a+hrs(c),0);
+  const cap = capOf(p), comLeft = cap - ev.applied, left = p.total - ev.applied, uh = p.total - cap;
+  $("fEntered").textContent = entered;
+  $("fApplied").textContent = ev.applied; $("fAppliedSub").textContent = `of ${cap} that fit the plan`;
+  $("tMid").textContent = Math.round(p.total/2);
+  $("fCom").textContent = comLeft;
+  $("fLeft").textContent = left; $("fLeftSub").textContent = `of ${p.total} hours`;
+  $("b1").style.width = ev.applied/p.total*100+"%"; $("b2").style.width = comLeft/p.total*100+"%"; $("b3").style.width = uh/p.total*100+"%";
+  $("tEnd").textContent = p.total+" hrs"; $("lgU").textContent = `At ${u.short} (at least ${uh})`;
+  $("bar").setAttribute("aria-label",`${ev.applied} hours count, ${comLeft} more can be taken at COM, at least ${uh} at ${u.short}`);
+  $("planTitle").textContent = `${u.short} ${p.name} degree plan`;
+  $("exampleBar").hidden = !state.example;
+
+  // course list
+  const tagCls = {core:"t-core",fos:"t-fos",el:"t-el",no:"t-no"};
+  $("clist").innerHTML = state.courses.map(c=>{ const r=ev.result[c];
+    return `<li><span class="code">${c}</span><span class="ttl">${T[c]||"Course"}<em>${r.label}</em></span><span class="tag ${tagCls[r.tag]}">${r.tag==="core"?"Core":r.tag==="fos"?"Major":r.tag==="el"?"Elective":"Won't count"}</span><button type="button" class="x" data-rm="${c}" aria-label="Remove ${c}">×</button></li>`}).join("");
+  $("clistEmpty").hidden = state.courses.length>0;
+
+  // plan
+  let html = "";
+  p.sections.forEach((sec,si)=>{
+    const got = sec.kind==="core"?ev.core:ev.fos;
+    html += `<div class="plan-sec"><div class="sec-h"><h3>${sec.name}</h3><span>${got} / ${sec.hours} hrs</span></div>`;
+    sec.groups.forEach((g,gi)=>{
+      const filled = state.courses.filter(c=>{const r=ev.result[c];return r.si===si&&r.gi===gi;});
+      const n = filled.length, need = g.slots.length;
+      const cls = n>=need?"done":n>0?"part":"";
+      const opts = g.show || [...new Set(g.slots.flatMap(s=>s.any||[]))];
+      const extra = filled.filter(c=>!opts.includes(c));
+      html += `<div class="req ${cls}"><span class="dot"></span><h4>${g.name}</h4><span class="meta">${filled.reduce((a,c)=>a+hrs(c),0)} / ${g.hours} hrs</span>`;
+      if(g.note) html += `<p>${g.note}</p>`;
+      if(n<need) html += `<span class="need">Still need ${need-n} course${need-n>1?"s":""}</span>`;
+      html += `<div class="chips">${[...extra,...opts].map(chip).join("")}</div></div>`;
+    });
+    html += `</div>`;
+  });
+  const els = state.courses.filter(c=>ev.result[c].tag==="el");
+  if(p.elecMax) html += `<div class="plan-sec"><div class="sec-h"><h3>General electives</h3><span>${ev.elec} / ${p.elecMax} hrs</span></div>
+    <div class="req ${ev.elec>0?"done":""}"><span class="dot"></span><h4>Any other college-level courses</h4><span class="meta">${ev.elec} hrs</span>
+    <p>Up to ${p.elecMax} hours transfer here. ${u.short} recommends ${p.elecRec} or fewer so you can add a minor.</p>
+    <div class="chips">${[...els.filter(c=>!p.electiveShow.includes(c)),...p.electiveShow].map(chip).join("")}</div></div></div>`;
+  $("plan").innerHTML = html;
+
+  $("notes").innerHTML = p.notes.map(n=>`<li>${n}</li>`).join("") +
+    `<li>Sources: ${p.sources.map(([t,h])=>`<a href="${h}" target="_blank" rel="noopener">${t}</a>`).join(" · ")}</li>`;
+  save();
+}
+
+function toggle(c){
+  if(state.example){ state.example=false; }
+  const i = state.courses.indexOf(c);
+  if(i>=0) state.courses.splice(i,1); else state.courses.push(c);
+  render();
+}
+
+// setup
+$("uni").innerHTML = Object.entries(PLANS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
+function fillMajors(){ const m = PLANS[state.uni].majors;
+  $("major").innerHTML = Object.entries(m).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
+  if(!m[state.major]) state.major = Object.keys(m)[0];
+  $("major").value = state.major; }
+$("uni").value = state.uni; fillMajors();
+$("uni").addEventListener("change",e=>{state.uni=e.target.value;fillMajors();render();});
+$("major").addEventListener("change",e=>{state.major=e.target.value;render();});
+$("courseList").innerHTML = Object.keys(T).sort().map(c=>`<option value="${c}">${T[c]}</option>`).join("");
+
+$("addForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const raw = $("addInput").value.trim(), c = norm(raw);
+  if(!c){ $("addErr").textContent = "Enter a course as subject and number, like PSYC 2301."; return; }
+  if(state.courses.includes(c)){ $("addErr").textContent = `${c} is already on your list.`; return; }
+  if(state.example){ state.example=false; }
+  state.courses.push(c); $("addInput").value=""; $("addErr").textContent = collegeLevel(c) ? "" : `${c} is not a college-level course, so it won't transfer.`;
+  render();
+});
+document.addEventListener("click",e=>{
+  const ch = e.target.closest("[data-c]"); if(ch){ toggle(ch.dataset.c); return; }
+  const rm = e.target.closest("[data-rm]"); if(rm){ toggle(rm.dataset.rm); }
+});
+$("clearBtn").addEventListener("click",()=>{state.courses=[];state.example=false;render();});
+$("resetBtn").addEventListener("click",()=>{state.courses=[];state.example=false;render();});
+render();
+</script>
+
+</body>
+</html>
