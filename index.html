@@ -40,6 +40,9 @@ h2{font:700 18px/1.2 var(--f-display);margin:0;text-wrap:balance;display:flex;al
 label,.lbl{font:600 12px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 select,input[type=text]{font:500 15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
 select:focus-visible,input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted);min-height:1.2em}
+.choose{align-items:start}
+.choose h2{align-self:center}
 .summary{margin-top:16px;display:grid;gap:16px}
 .figs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .fig{padding:12px 14px;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -62,6 +65,7 @@ button{font:600 14px var(--f-body);cursor:pointer;border-radius:8px;border:1px s
 button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
 .err{color:var(--warn);font-size:13px;min-height:1em;margin:0}
 .clist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.clist li.flash{background:var(--com-soft);transition:background .2s}
 .clist li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
 .code{font:500 13px var(--f-mono);white-space:nowrap}
 .ttl{font-size:14px;min-width:0;overflow-wrap:anywhere}
@@ -87,6 +91,7 @@ button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
 .chip:hover{border-color:var(--accent)}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .need{grid-column:2/4;font-size:13px;color:var(--com);font-weight:600}
+.need.uni{color:var(--uhcl)}
 .notes{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
 .notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .notes a{color:var(--accent)}
@@ -102,14 +107,14 @@ footer{padding-block:20px 36px}
   <header>
     <div class="eyebrow">College of the Mainland · Transfer Planning</div>
     <h1>Plan your transfer to a bachelor's degree</h1>
-    <p class="sub">Choose a university and major, add the courses you have passed at COM, and see how many hours transfer and how many you will still need for the degree.</p>
+    <p class="sub">Choose a major and a university that offers it, add the courses you have passed at COM, and see how many hours transfer and how many you will still need for the degree.</p>
   </header>
 
   <section class="panel">
     <div class="choose">
       <h2><span class="num">1</span>Choose</h2>
-      <div class="field"><label for="uni">University</label><select id="uni"></select></div>
       <div class="field"><label for="major">Major</label><select id="major"></select></div>
+      <div class="field"><label for="uni">University</label><select id="uni"></select><span class="hint" id="uniHint"></span></div>
     </div>
   </section>
 
@@ -117,7 +122,7 @@ footer{padding-block:20px 36px}
     <div class="figs">
       <div class="fig"><small>You entered</small><b id="fEntered">0</b><span>college hours</span></div>
       <div class="fig a"><small>Counts toward degree</small><b id="fApplied">0</b><span id="fAppliedSub">of 75 transferable</span></div>
-      <div class="fig c"><small>Still possible at COM</small><b id="fCom">0</b><span>more hours that can transfer</span></div>
+      <div class="fig c"><small>Still possible at COM</small><b id="fCom">0</b><span>more hours you can take here</span></div>
       <div class="fig u"><small>Left for the degree</small><b id="fLeft">0</b><span id="fLeftSub">of 120 hours</span></div>
     </div>
     <div>
@@ -126,8 +131,8 @@ footer{padding-block:20px 36px}
     </div>
     <div class="legend">
       <span style="--c:var(--accent)">Already counts</span>
-      <span style="--c:var(--com)">Can still take at COM</span>
-      <span style="--c:var(--uhcl)" id="lgU">At UHCL (at least 45)</span>
+      <span style="--c:var(--com)">Can still take at COM (courses COM offers)</span>
+      <span style="--c:var(--uhcl)" id="lgU">At UHCL</span>
     </div>
   </section>
 
@@ -135,18 +140,18 @@ footer{padding-block:20px 36px}
     <section class="panel stack">
       <h2><span class="num">2</span>Courses you passed</h2>
       <div class="example" id="exampleBar" hidden>
-        <span>Showing an example student. Clear it to enter your own courses.</span>
+        <span>Showing an example student. Add or tap your first course to start your own list.</span>
         <button class="ghost" id="clearBtn" type="button">Clear example</button>
       </div>
-      <form id="addForm" class="stack" style="gap:6px" autocomplete="off">
-        <label for="addInput">Add a course by number</label>
+      <div id="addForm" class="stack" style="gap:6px">
+        <label for="addInput">Add a course</label>
         <div class="addrow">
-          <input id="addInput" type="text" list="courseList" placeholder="e.g. PSYC 2301" aria-describedby="addErr">
-          <button type="submit">Add</button>
+          <input id="addInput" type="text" autocomplete="off" list="courseList" placeholder="Course number or title, e.g. PSYC 2301" aria-describedby="addErr">
+          <button type="button" id="addBtn">Add</button>
         </div>
         <datalist id="courseList"></datalist>
-        <p class="err" id="addErr"></p>
-      </form>
+        <p class="err" id="addErr" role="status"></p>
+      </div>
       <p class="empty" style="margin:0">Or tap any course in the degree plan to add it. Only list courses you passed with a C or better.</p>
       <ul class="clist" id="clist"></ul>
       <p class="empty" id="clistEmpty" hidden>No courses yet.</p>
@@ -170,6 +175,10 @@ footer{padding-block:20px 36px}
 </div>
 
 <script>
+/* Courses COM offers, with titles, from the COM Academic Catalog course descriptions (Oct 2026). Update this list when the catalog changes. */
+const OFFERED = {"ACCT 2301":"Principles of Financial Accounting","ACCT 2302":"Principles of Managerial Accounting","ACNT 1303":"Introduction to Accounting I","ACNT 1313":"Computerized Accounting Applications","ACNT 1331":"Federal Income Tax: Individual","ACNT 2302":"Accounting Capstone","ARTC 1302":"Digital Imaging I","ARTC 1313":"Digital Publishing I","ARTC 1327":"Typography","ARTC 1349":"Art Direction I","ARTC 1353":"Computer Illustration","ARTC 2313":"Digital Publishing II","ARTC 2335":"Portfolio Development for Graphic Design","ARTC 2388":"Internship - Commercial and Advertising Art","ARTS 1301":"Art Appreciation","ARTS 1303":"Art History I","ARTS 1304":"Art History II","ARTS 1311":"Design I","ARTS 1312":"Design II","ARTS 1313":"Foundations of Art","ARTS 1316":"Drawing I","ARTS 1317":"Drawing II","ARTS 2311":"Design III","ARTS 2313":"Graphic Design","ARTS 2316":"Painting I","ARTS 2317":"Painting II","ARTS 2323":"Life Drawing","ARTS 2326":"Sculpture I","ARTS 2346":"Ceramics I","ARTS 2347":"Ceramics II","ARTS 2348":"Digital Media","ARTS 2356":"Photography I","ARTS 2357":"Photography II","ARTV 1291":"Special Topics - Visual/performance Arts","ARTV 1351":"Digital Video","ARTV 2320":"Team Program Production I","ARTV 2341":"Advanced Digital Video","ASTR 1403":"Stars and Galaxies","ASTR 1404":"Solar System","BARB 1402":"Barber Styling I","BARB 1404":"Introduction to Barber Styling","BARB 1442":"Barber Styling II","BARB 2431":"Advanced Barber Styling I","BARB 2432":"Barber Law and Shop Management I","BARB 2441":"Advanced Barber Styling II","BARB 2444":"Barber Law and Shop Management II","BCIS 1305":"Business Computer Applications","BIOL 1322":"Nutrition and Diet Therapy","BIOL 1406":"Biology for Science Majors I","BIOL 1407":"Biology for Science Majors II","BIOL 1408":"Biology for Non-science Majors I","BIOL 1409":"Biology for Non-science Majors II","BIOL 2401":"Anatomy & Physiology I","BIOL 2402":"Anatomy & Physiology II","BIOL 2420":"Microbiology for Non-science Majors","BMGT 1309":"Information and Project Management","BMGT 1313":"Principles of Purchasing","BMGT 1327":"Principles of Management","BMGT 2303":"Problem Solving and Decision Making","BMGT 2309":"Leadership","BMGT 2341":"Strategic Management","BUSG 1315":"Small Business Operations","BUSG 1341":"Small Business Financing","BUSG 2309":"Small Business Management/entrepreneurship","BUSI 1301":"Business Principles","BUSI 2301":"Business Law","BUSI 2304":"Business Report Writing and Correspondence","BUSI 2305":"Business Statistics","CETT 1302":"Electricity Principles","CHEF 1205":"Sanitation and Safety","CHEF 1301":"Basic Food Preparation","CHEF 1302":"Principles of Healthy Cuisine","CHEF 1310":"Garde Manger","CHEF 1314":"A La Carte Cooking","CHEF 1341":"American Regional Cuisine","CHEF 1345":"International Cuisine","CHEF 2301":"Intermediate Food Preparation","CHEF 2364":"Practicum (or Field Experience) - Culinary Arts/chef Training","CHEM 1405":"Introductory Chemistry I (process Tech) /occupational Safety)(030)","CHEM 1406":"Introductory Chemistry I","CHEM 1411":"General Chemistry I","CHEM 1412":"General Chemistry II","CHEM 2423":"Organic Chemistry I","CHEM 2425":"Organic Chemistry II","CJLE 1327":"Interviewing and Report Writing for Criminal Justice Professions","CJCR 1307":"Correctional Systems and Practices","CJSA 1348":"Ethics in Criminal Justice","CJSA 1351":"Use of Force","CJSA 1382":"Cooperative Education Criminal Justice","CJSA 1401":"Death Investigations II","CJSA 2332":"Criminalistics III","CJSA 2388":"Internship - Criminal Justice/safety Studies","COSC 1301":"Introduction to Computing","COSC 1336":"Programming Fundamentals I","COSC 1437":"Programming Fundamentals II","COSC 2336":"Programming Fundamentals III","COSC 2425":"Computer Organization","CRIJ 1301":"Introduction to Criminal Justice","CRIJ 1306":"Court Systems and Practices","CRIJ 1310":"Fundamentals of Criminal Law","CRIJ 2313":"Correctional Systems and Practices","CRIJ 2328":"Police Systems and Practices","CSME 1202":"Applications for Facial and Skin Care Technology","CSME 1244":"Introduction to Salon Development","CSME 1302":"Applications of Facial and Skin Care Technology I","CSME 1308":"Principles of Eyelash Extensions","CSME 1330":"Orientation to Nail Technology","CSME 1348":"Principles of Skin Care","CSME 1401":"Orientation to Cosmetology","CSME 1405":"Fundamentals of Cosmetology","CSME 1410":"Introduction to Haircutting and Related Theory","CSME 1420":"Orientation to Facial Specialist","CSME 1443":"Manicuring and Related Theory","CSME 1447":"Principles of Skin Care/facials and Related Theory","CSME 1451":"Artistry of Hair, Theory and Practice","CSME 1453":"Chemical Reformation and Related Theory","CSME 1492":"Special Topics: Cosmetology Instructor","CSME 1534":"Cosmetology Instructor I","CSME 1535":"Orientation to the Instruction of Cosmetology","CSME 2250":"Preparation for State Licensing Written Examination","CSME 2251":"Preparation for State Licensing Practical Examination","CSME 2333":"Application of Facial and Skin Technology II","CSME 2401":"Principles of Hair Coloring and Related Theory","CSME 2414":"Cosmetology Instructor II","CSME 2436":"Advanced Cosmetology Applications & Related Theory","CSME 2441":"Preparation for the State Licensing Examination","CSME 2549":"Cosmetology Instructor III","CTEC 2445":"Unit Operations","DHYG 1162":"Clinical - Dental Hygiene/hygienist","DHYG 1191":"Special Topics in Dental Hygienist","DHYG 1201":"Orofacial Anatomy, Histology & Embryology","DHYG 1207":"General and Dental Nutrition","DHYG 1211":"Periodontology","DHYG 1215":"Community Dentistry","DHYG 1219":"Dental Materials","DHYG 1227":"Preventive Dental Hygiene Care","DHYG 1235":"Pharmacology for the Dental Hygienist","DHYG 2201":"Dhyg 1239. General and Oral Pathology","DHYG 1261":"Clinical - Dental Hygiene/hygienist","DHYG 1304":"Dental Radiology","DHYG 1431":"Preclinical Dental Hygiene","DHYG 2153":"Dental Hygiene Practice","DHYG 2231":"Dental Hygiene Care II","DHYG 2261":"Clinical - Dental Hygiene/hygienist","DHYG 2362":"Clinical - Dental Hygiene/hygienist","DRAM 1120":"Theater Practicum I","DRAM 1121":"Theater Practicum II","DRAM 1310":"Theater Appreciation","DRAM 1322":"Stage Movement","DRAM 1330":"Stagecraft I","DRAM 1342":"Costume Technology","DRAM 1351":"Acting I","DRAM 1352":"Acting II","DRAM 2120":"Theater Practicum III","DRAM 2121":"Theater Practicum IV","DRAM 2331":"Stagecraft II","DRAM 2335":"Theater Design","DRAM 2336":"Voice for the Actor","DRAM 2355":"Script Analysis","DRAM 2366":"Film Appreciation","ECON 2301":"Principles of Macroeconomics","ECON 2302":"Principles of Microeconomics","EDUC 1300":"Learning Framework","PSYC 1300":"Credit Will Not Be Given for Both Psyc 1300 and Educ 1300. This Is an Academic Transfer","EDUC 1301":"Introduction to the Teaching Profession","EDUC 2301":"Introduction to Special Populations","ELPT 1321":"Introduction to Electrical Safety & Tools","EMSP 1205":"Emergency Care Attendant","EMSP 1260":"Clinical - Emergency Medical Technology","EMSP 1338":"Introduction to Advanced Practice","EMSP 1355":"Trauma Management","EMSP 1356":"Patient Assessment/airway Management","EMSP 1471":"Advanced Trauma Management","EMSP 1501":"Emergency Medical Technician - Basic","EMSP 2135":"Advanced Cardiac Life Support","EMSP 2168":"Practicum/field Experience-emergency Medical Technology/technician","EMSP 2205":"Ems Operations","EMSP 2243":"Assessment Based Management","EMSP 2269":"Practicum (or Field Experience) - Emergency Medical","EMSP 2306":"Emergency Pharmacology","EMSP 2330":"Special Populations","EMSP 2434":"Medical Emergencies","EMSP 2444":"Cardiology","EMSP 2561":"Clinical - Emt Clinical - Emergency Medical Technician","ENGL 1301":"Composition I","ENGL 1302":"Composition II","ENGL 2307":"Creative Writing","ENGL 2311":"Technical & Business Writing","ENGL 2322":"British Literature I","ENGL 2323":"British Literature II","ENGL 2327":"American Literature I","ENGL 2328":"American Literature II","ENGL 2332":"World Literature I","ENGL 2333":"World Literature II","ENGL 2341":"Forms of Literature","ENGL 2351":"Mexican-american Literature","ENGR 1201":"Introduction to Engineering","ENGR 1304":"Engineering Graphics I","ENGR 2301":"Engineering Mechanics - Statics","MATH 2414":"Engr 2302. Engineering Mechanics - Dynamics","ENGR 2304":"Programming for Engineers","ENGR 2305":"Electrical Circuits I","ENVR 1401":"Environmental Science I","EPCT 1305":"Environmental Regulations Overview","EPCT 1313":"Contingency Planning","EPCT 1341":"Principles of Industrial Hygiene","FIRS 1103":"Firefighter Agility & Fitness Preparation","FIRS 1313":"Firefighter Certification III","FIRS 1319":"Firefighter Certification IV","FIRS 1323":"Firefighter Certification V","FIRS 1329":"Firefighter Certification Vi","FIRS 1401":"Firefighter Certification I","FIRS 1407":"Firefighter Certification II","FIRS 1433":"Firefighter Certification Vii","FIRT 1305":"Public Education Programs","FIRT 1353":"Legal Aspects of Fire Protection Service","FIRT 1392":"Special Topics in Fires Service Administration - Fireground Incident","FIRT 1440":"Fire Inspector II","FIRT 1443":"Fire Officer II","FIRT 1450":"Fire Investigator","FIRT 2111":"Incident Safety Officer","FIRT 2309":"Firefighting Strategies and Tactics I","FIRT 2407":"Fire Instructor II","FIRT 2457":"Fire Officer IV","GEOL 1403":"Physical Geology","GEOL 1404":"Historical Geology","GEOL 1445":"Oceanography","GEOL 1447":"Meteorology","GOVT 2305":"Federal Government (federal Constitution & Topics)","GOVT 2306":"Texas Government (texas Constitution & Topics)","HIST 1301":"U S History I","HIST 1302":"U S History II","HIST 2301":"Texas History","HITT 1255":"Health Care Statistics","HITT 1301":"Health Data Content and Structure","HITT 1305":"Medical Terminology I","HITT 1311":"Health Information Systems","HITT 1341":"Coding and Classification Systems","HITT 1345":"Health Care Delivery System","HITT 1353":"Legal and Ethical Aspects of Health Information","HITT 1391":"Special Topics - Health Information Technology/technician -","HITT 2266":"Practicum - Registered Health Information Technician Review","HITT 2330":"Pathophysiology and Pharmacology","HITT 2335":"Coding and Reimbursement Methodologies","HITT 2339":"Health Information Organization and Supervision","HITT 2343":"Quality Assessment and Performance Improvement","HITT 2346":"Advanced Medical Coding","HPRS 1201":"Introduction to Health Professions","MDCA 1321":"Hrpo 2301. Human Resources Management","HUMA 1301":"Introduction to the Humanities I","HUMA 1302":"Intro to the Humanities II","IFWA 1318":"Nutrition for the Food Service Professional","IMED 1316":"Web Design I","IMED 2315":"Web Design II","INTC 1301":"Principles of Industrial Measurements I","INTC 1315":"Final Control Elements","INTC 1448":"Analytical Instrumentation","INTC 1457":"Ac/dc Motor Controls","INTC 2330":"Instrumentation Systems Troubleshooting","INTC 2410":"Principles of Industrial Measurements II","INTC 2436":"Distributed Control and Programmable Logic","ITNW 1308":"Implementing and Supporting Client Operating Systems","ITNW 1309":"Fundamentals of Cloud Computing","ITNW 1325":"Fundamentals of Networking Technologies","ITNW 1336":"Cloud Deployment & Infrastructure Management","ITNW 1354":"Implementing and Supporting Servers","ITNW 1358":"Network+","ITNW 1380":"Cooperative Education - Computer Systems Networking and","ITNW 1445":"Implementing Network Directory Services","ITNW 2312":"Routers","ITSC 1305":"Introduction to Pc Operating Systems","ITSC 1315":"It Project Management","ITSC 1316":"Linux Installation and Configuration","ITSC 1325":"Personal Computer Hardware","ITSC 1380":"Cooperative Education - Computer and Information Sciences, General","ITSC 1391":"Special Topics in Computer and Information Sciences, General Linux","ITSC 1392":"Special Topics in Data Processing and Data Processing","ITSC 2325":"Advanced Linux","ITSE 1380":"Cooperative Education - Computer Programming","ITSE 1391":"Special Topics in Computer Programming - Uipath I: Robotic Process","ITSE 1392":"Special Topics in Computer Programming - Uipath Ii: Intermediate","ITSE 1393":"Special Topics in Computer Systems Analysis - Uipath Iii: Advanced Rpa","ITSE 1394":"Special Topics in Computer Science - Blue Prism Iii: Advanced Robotic","ITSW 1307":"Introduction to Database","ITSW 1391":"Special Topics in Data Processing Technology/technician - Blue Prism I:","ITSY 1342":"Information Technology Security","ITSY 2301":"Firewalls & Network Security","ITSY 2342":"Incident Response and Handling","ITSY 2359":"Security Assessment and Auditing","MATH 1314":"College Algebra","MATH 1324":"Math for Business and Social Science","MATH 1325":"Calculus for Business & Social Sciences","MATH 1332":"Contemporary Math (quantitative Reasoning)","MATH 1342":"Elementary Statistical Methods","MATH 1350":"Mathematics for Teachers I","MATH 1351":"Mathematics for Teachers II","MATH 2305":"Discrete Mathematics","MATH 2318":"Linear Algebra","MATH 2320":"Differential Equations","MATH 2412":"Precalculus","MATH 2413":"Calculus I","MATH 2415":"Calculus III","MDCA 1254":"Certified Medical Assistant Exam Review","MDCA 1291":"Special Topics in Medical Assistant - Professional Readiness","MDCA 1305":"Medical Law and Ethics","MDCA 1409":"Anatomy and Physiology for Medical Assistants","MDCA 1417":"Procedures in a Clinical Setting","MDCA 1443":"Medical Insurance","MDCA 1448":"Pharmacology & Administration of Medications","MDCA 1452":"Medical Assistant Laboratory Procedures","MDCA 1460":"Clinical - Medical/clinical Assistant","MRKG 1301":"Customer Relationship Management","MRKG 1311":"Principles of Marketing","MRKG 2333":"Principles of Selling","MRKG 2349":"Advertising and Sales Promotion","MUAP 1101":"Individual Violin","MUAP 1105":"Individual Viola","MUAP 1106":"Individual Viola","MUAP 1109":"Individual Cello","MUAP 1110":"Individual Cello","MUAP 1113":"Individual Bass Violin","MUAP 1114":"Individual Bass Violin","MUAP 1117":"Individual Flute/piccolo","MUAP 1118":"Individual Flute/piccolo","MUAP 1121":"Individual Oboe","MUAP 1122":"Individual Oboe","MUAP 1125":"Individual Bassoon","MUAP 1126":"Individual Bassoon","MUAP 1129":"Individual Clarinet","MUAP 1130":"Individual Clarinet","MUAP 1133":"Individual Saxophone","MUAP 1134":"Individual Saxophone","MUAP 1137":"Individual Trumpet","MUAP 1138":"Individual Trumpet","MUAP 1141":"Individual French Horn","MUAP 1142":"Individual French Horn","MUAP 1145":"Individual Trombone","MUAP 1146":"Individual Trombone","MUAP 1149":"Individual Euphonium/baritone","MUAP 1150":"Individual Euphonium/baritone","MUAP 1153":"Individual Tuba","MUAP 1154":"Individual Tuba","MUAP 1157":"Individual Percussion","MUAP 1158":"Individual Percussion","MUAP 1161":"Individual Guitar","MUAP 1162":"Individual Guitar","MUAP 1165":"Individual Organ","MUAP 1169":"Individual Piano","MUAP 1170":"Individual Piano","MUAP 1181":"Individual Voice","MUAP 1182":"Individual Voice","MUAP 1185":"Improvisation","MUAP 1186":"Improvisation","MUAP 1201":"Individual Violin","MUAP 1202":"Individual Violin","MUAP 1205":"Individual Viola","MUAP 1206":"Individual Viola","MUAP 1209":"Individual Cello","MUAP 1210":"Individual Cello","MUAP 1213":"Individual Bass Violin","MUAP 1214":"Individual Bass Violin","MUAP 1217":"Individual Flute/piccolo","MUAP 1218":"Individual Flute/piccolo","MUAP 1221":"Individual Oboe","MUAP 1222":"Individual Oboe","MUAP 1225":"Individual Bassoon","MUAP 1226":"Individual Bassoon","MUAP 1229":"Individual Clarinet","MUAP 1230":"Individual Clarinet","MUAP 1233":"Individual Saxophone","MUAP 1234":"Individual Saxophone","MUAP 1237":"Individual Trumpet","MUAP 1238":"Individual Trumpet","MUAP 1241":"Individual French Horn","MUAP 1242":"Individual French Horn","MUAP 1245":"Individual Trombone","MUAP 1246":"Individual Trombone","MUAP 1249":"Individual Euphonium/baritone","MUAP 1250":"Individual Euphonium/baritone","MUAP 1253":"Individual Tuba","MUAP 1254":"Individual Tuba","MUAP 1257":"Individual Percussion","MUAP 1258":"Individual Percussion","MUAP 1261":"Individual Guitar","MUAP 1262":"Individual Guitar","MUAP 1265":"Individual Organ","MUAP 1266":"Individual Organ","MUAP 1269":"Individual Piano","MUAP 1270":"Individual Piano","MUAP 1281":"Individual Voice","MUAP 1282":"Individual Voice","MUAP 1285":"Individual Improvisation I","MUAP 1286":"Individual Improvisation II","MUAP 2103":"Individual Violin","MUAP 2104":"Individual Violin","MUAP 2107":"Individual Viola","MUAP 2108":"Individual Viola","MUAP 2111":"Individual Cello","MUAP 2112":"Individual Cello","MUAP 2115":"Individual Bass Violin","MUAP 2116":"Individual Bass Violin","MUAP 2119":"Individual Flute/piccolo","MUAP 2120":"Individual Flute/piccolo","MUAP 2123":"Individual Oboe","MUAP 2124":"Individual Oboe","MUAP 2127":"Individual Bassoon","MUAP 2128":"Individual Bassoon","MUAP 2131":"Individual Clarinet","MUAP 2132":"Individual Clarinet","MUAP 2135":"Individual Saxophone","MUAP 2136":"Individual Saxophone","MUAP 2139":"Individual Trumpet","MUAP 2140":"Individual Trumpet","MUAP 2143":"Individual French Horn","MUAP 2144":"Individual French Horn","MUAP 2147":"Individual Trombone","MUAP 2148":"Individual Trombone","MUAP 2151":"Individual Euphonium/baritone","MUAP 2152":"Individual Euphonium/baritone","MUAP 2155":"Individual Tuba","MUAP 2156":"Individual Tuba","MUAP 2159":"Individual Percussion","MUAP 2160":"Individual Percussion","MUAP 2163":"Individual Guitar","MUAP 2164":"Individual Guitar","MUAP 2167":"Individual Organ","MUAP 2168":"Individual Organ","MUAP 2171":"Individual Piano","MUAP 2172":"Individual Piano","MUAP 2183":"Individual Voice","MUAP 2184":"Individual Voice","MUAP 2187":"Improvisation","MUAP 2188":"Improvisation","MUAP 2203":"Individual Violin","MUAP 2204":"Individual Violin","MUAP 2207":"Individual Viola","MUAP 2208":"Individual Viola","MUAP 2211":"Individual Cello","MUAP 2212":"Individual Cello","MUAP 2215":"Individual Bass Violin","MUAP 2216":"Individual Bass Violin","MUAP 2219":"Individual Flute/piccolo","MUAP 2220":"Individual Flute/piccolo","MUAP 2223":"Individual Oboe","MUAP 2224":"Individual Oboe","MUAP 2227":"Individual Bassoon","MUAP 2228":"Individual Bassoon","MUAP 2231":"Individual Clarinet","MUAP 2232":"Individual Clarinet","MUAP 2235":"Individual Saxophone","MUAP 2236":"Individual Saxophone","MUAP 2239":"Individual Trumpet","MUAP 2240":"Individual Trumpet","MUAP 2243":"Individual French Horn","MUAP 2244":"Individual French Horn","MUAP 2247":"Individual Trombone","MUAP 2248":"Individual Trombone","MUAP 2251":"Individual Euphonium/baritone","MUAP 2252":"Individual Euphonium/baritone","MUAP 2255":"Individual Tuba","MUAP 2256":"Individual Tuba","MUAP 2259":"Individual Percussion","MUAP 2260":"Individual Percussion","MUAP 2263":"Individual Guitar","MUAP 2264":"Individual Guitar","MUAP 2267":"Individual Organ","MUAP 2268":"Individual Organ","MUAP 2271":"Individual Piano","MUAP 2272":"Individual Piano","MUAP 2283":"Individual Voice","MUAP 2284":"Individual Voice","MUAP 2287":"Individual Improvisation III","MUAP 2288":"Individual Improvisation IV","MUEN 1121":"Concert Band","MUEN 1122":"Concert Band","MUEN 1125":"Jazz Ensemble","MUEN 1126":"Jazz Ensemble","MUEN 1131":"Mixed Chamber Ensemble","MUEN 1132":"Mixed Chamber Ensemble","MUEN 1133":"Woodwind Ensemble","MUEN 1134":"Brass Guild","MUEN 1135":"Jazz Combo","MUEN 1136":"Jazz Combo","MUEN 1138":"Percussion Ensemble","MUEN 1139":"Guitar Ensemble","MUEN 1140":"Guitar Ensemble","MUEN 1141":"Mainland Chorale","MUEN 1142":"Mainland Chorale","MUEN 1153":"Duck & Cover a Cappella","MUEN 1154":"Duck & Cover a Cappella","MUEN 1155":"Men's Vocal Ensemble","MUEN 1156":"Men's Vocal Ensemble","MUEN 2121":"Concert Band","MUEN 2122":"Concert Band","MUEN 2125":"Jazz Ensemble","MUEN 2126":"Jazz Ensemble","MUEN 2131":"Mixed Chamber Ensemble","MUEN 2132":"Mixed Chamber Ensemble","MUEN 2133":"Woodwind Ensemble","MUEN 2134":"Brass Guild","MUEN 2135":"Jazz Combo","MUEN 2136":"Jazz Combo","MUEN 2138":"Percussion Ensemble","MUEN 2139":"Guitar Ensemble","MUEN 2140":"Guitar Ensemble","MUEN 2141":"Mainland Chorale","MUEN 2142":"Mainland Chorale","MUEN 2153":"Duck & Cover a Cappella","MUEN 2154":"Duck & Cover a Cappella","MUEN 2155":"Men's Vocal Ensemble","MUEN 2156":"Men's Vocal Ensemble","MUSI 1116":"Sight Singing & Ear Training I","MUSI 1117":"Sight Singing & Ear Training II","MUSI 1157":"Opera Workshop","MUSI 1181":"Piano Class I","MUSI 1182":"Piano Class II","MUSI 1183":"Voice Class","MUSI 1192":"Guitar Class","MUSI 1303":"Fundamentals of Music","MUSI 1306":"Music Appreciation","MUSI 1307":"Music Literature","MUSI 1310":"American Music","MUSI 1311":"Music Theory I","MUSI 1312":"Music Theory II","MUSI 2116":"Sight Singing & Ear Training III","MUSI 2117":"Sight Singing & Ear Training IV","MUSI 2181":"Piano Class III","MUSI 2182":"Piano Class IV","MUSI 2311":"Music Theory III","MUSI 2312":"Music Theory IV","OSHT 1301":"Introduction to Safety and Health","OSHT 1305":"Osha Regulations - Construction Industry","OSHT 1309":"Physical Hazards Control","OSHT 1313":"Accident Prevention, Inspection and Investigation","OSHT 1321":"Fire Protection Systems","OSHT 2305":"Ergonomics and Human Factors in Safety","OSHT 2309":"Safety Program Management","OSHT 2401":"Osha Regulations - General Industry","PHED 1110":"Weight Training","PHED 1111":"Hatha Yoga","PHED 1112":"Weight Control","PHED 1133":"Introduction to Recreational Sports - Pickleball","PHED 1143":"Aerobic - Run/walk","PHED 1145":"Aerobic - Cross-training","PHED 1146":"Aerobic - Kickboxing","PHED 1164":"Introduction to Physical Fitness and Wellness","PHED 1304":"Personal/community Health","PHED 1306":"First Aid","PHED 2110":"Team Games and Sports","PHED 2113":"Individual Games and Sports","PHED 2115":"Innovative Games and Sports","PHIL 1301":"Introduction to Philosophy","PHIL 1304":"Introduction to World Religions","PHIL 2306":"Introduction to Ethics","PHRA 1243":"Pharmacy Technician Certification Review","PHRA 1301":"Introduction to Pharmacy","PHRA 1309":"Pharmaceutical Math I","PHRA 1347":"Pharmaceutical Math II","PHRA 1404":"Pharmacotherapy and Disease Process","PHRA 1441":"Pharmacy Drug Therapy and Treatment","PHRA 1445":"Compounding Sterile Preparations","PHRA 1449":"Institutional Pharmacy Practice","PHRA 2360":"Clinical - Pharmacy Technician/assistant","PHYS 1401":"College Physics I","PHYS 1402":"College Physics II","PHYS 1410":"Elementary Physics","PHYS 2425":"University Physics I","PHYS 2426":"University Physics II","POFT 1300":"Career Exploration/planning","POFT 1321":"Business Math","PSTR 1301":"Fundamentals of Baking","PSTR 2331":"Advanced Pastry Shop","PSYC 2301":"General Psychology","PSYC 2314":"Lifespan Growth & Development","PSYC 2317":"Statistical Methods in Psychology","PTAC 1302":"Introduction to Process Technology","PTAC 1308":"Safety, Health, and Environment I","PTAC 1310":"Process Technology I - Equipment","PTAC 1332":"Process Instrumentation I","PTAC 1350":"Industrial Economics","PTAC 1354":"Industrial Processes","PTAC 2314":"Quality","PTAC 2346":"Process Troubleshooting","PTAC 2420":"Process Technology II - Systems","PTAC 2438":"Process Technology III - Operations","RADR 1166":"Practicum (or Field Experience) - Radiologic Technology/science -","RADR 1266":"Practicum (or Field Experience) - Radiologic Technology/science -","RADR 2401":"Radr 1309. Introduction to Radiography and Patient Care","RADR 1313":"Principles of Radiographic Imaging I","RADR 1411":"Basic Radiographic Procedures","RADR 2209":"Radiographic Imaging Equipment","RADR 2217":"Radiographic Pathology","RADR 2266":"Practicum (or Field Experience) - Radiologic Technology/science -","RADR 2305":"Principles of Radiographic Imaging II","RADR 2313":"Radiation Biology and Protection","RADR 2331":"Advanced Radiographic Procedures","RADR 2333":"Advanced Medical Imaging","RADR 2335":"Radiologic Technology Seminar","RADR 2367":"Practicum (or Field Experience) - Radiologic Technology/science -","RADR 2368":"Practicum (or Field Experience) - Radiologic Technology/science -","RNSG 1162":"Complex Concepts of Adult Health Clinical","RNSG 1260":"Foundations of Nursing Clinical","RNSG 1261":"Common Concepts of Adult Health Clinical","RNSG 1263":"Transition to Professional Nursing Clinical","RNSG 1327":"Transition to Professional Nursing","RNSG 1331":"Principles of Clinical Decision-making","RNSG 1341":"Common Concepts of Adult Health","RNSG 1343":"Complex Concepts of Adult Health","RNSG 1412":"Nursing Care of the Childbearing and Childrearing Family","RNSG 1413":"Foundations for Nursing Practice","RNSG 2161":"Mental Health Nursing Clinical","RNSG 2213":"Mental Health Nursing","RNSG 2230":"Professional Nursing Review and Licensure Preparation","RNSG 2261":"Nursing Care of the Childbearing and Childrearing Family Clinical","RNSG 2262":"Enhanced Concepts of Adult Health Clinical","RNSG 2263":"Capstone Clinical","RNSG 2332":"Enhanced Concepts of Adult Health","RSTO 1304":"Dining Room Service","RSTO 1313":"Hospitality Supervision","RSTO 2431":"Food Service Management","RTVB 2337":"Tv/video Production Workshop I","SGNL 1301":"Beginning American Sign Language I","SGNL 1302":"Beginning American Sign Language II","SOCI 1301":"Introduction to Sociology","SOCI 1306":"Social Problems","SPAN 1411":"Beginning Spanish I","SPAN 1412":"Beginning Spanish II","SPAN 2311":"Intermediate Spanish I","SPAN 2312":"Intermediate Spanish II","SPAN 2313":"Spanish for Native/heritage Speakers I","SPAN 2315":"Spanish for Native/heritage Speakers II","SPCH 1315":"Public Speaking","SPCH 1318":"Interpersonal Communication","SPCH 1321":"Business & Professional Communication","SPCH 1342":"Voice and Diction","SPCH 2335":"Argumentation and Debate","SRGT 1244":"Technological Sciences for the Surgical Technologist","SRGT 1260":"Clinical - Surgical Technology/technologist","SRGT 1360":"Clinical - Surgical Technology/technologist","SRGT 1460":"Clinical - Surgical Technology/technologist","SRGT 1505":"Introduction to Surgical Technology","SRGT 1509":"Fundamentals of Perioperative Concepts and Techniques","SRGT 1541":"Surgical Procedures I","SRGT 1542":"Surgical Procedures II","SRGT 2230":"Professional Readiness","TECA 1354":"Child Growth and Development","TECM 1343":"Technical Algebra and Trigonometry","VNSG 1119":"Leadership and Professional Development","VNSG 1204":"Foundations of Nursing","VNSG 1227":"Essentials of Medication Administration","VNSG 1230":"Maternal-neonatal Nursing","VNSG 1231":"Pharmacology","VNSG 1234":"Pediatrics","VNSG 1236":"Mental Health","VNSG 1260":"Clinical - Practical Nursing I","VNSG 1261":"Clinical-practical Nursing II","VNSG 1323":"Basic Nursing Skills","VNSG 1329":"Medical-surgical Nursing I","VNSG 1432":"Medical-surgical Nursing II","VNSG 2331":"Advanced Nursing Skills","WLDG 1412":"Introduction to Flux Cored Arc Welding (fcaw)","WLDG 1425":"Introduction to Oxy-fuel Welding and Cutting","WLDG 1428":"Introduction to Shielded Metal Arc Welding (smaw)","WLDG 1430":"Introduction to Gas Metal Arc (gmaw) Welding","WLDG 1434":"Introduction to Gas Tungsten Arc (gtaw) Welding","WLDG 1435":"Introduction to Pipe Welding","WLDG 1457":"Intermediate Shielded Metal Arc (smaw) Welding","WLDG 2406":"Intermediate Pipe Welding","WLDG 2413":"Welding Using Multiple Processes","WLDG 2451":"Advanced Gas Tungsten Arc (gtaw) Welding","WLDG 2453":"Advanced Pipe Welding"};
+const title = c => T[c] || OFFERED[c] || "Course";
+const atCOM = c => c in OFFERED;
 const T = {
  "ENGL 1301":"Composition I","ENGL 1302":"Composition II","ENGL 2311":"Technical & Business Writing",
  "ENGL 2322":"British Literature I","ENGL 2323":"British Literature II","ENGL 2327":"American Literature I","ENGL 2328":"American Literature II","ENGL 2332":"World Literature I","ENGL 2333":"World Literature II","ENGL 2341":"Forms of Literature","ENGL 2351":"Mexican-American Literature",
@@ -184,6 +193,7 @@ const T = {
  "PSYC 1300":"Learning Framework","EDUC 1300":"Learning Framework","PHED 1164":"Introduction to Physical Fitness & Wellness",
  "PSYC 2301":"General Psychology","PSYC 2314":"Lifespan Growth & Development","PSYC 2317":"Statistical Methods in Psychology","PSYC 2319":"Social Psychology",
  "EDUC 1301":"Introduction to the Teaching Profession","EDUC 2301":"Introduction to Special Populations","MATH 1350":"Mathematics for Teachers I","MATH 1351":"Mathematics for Teachers II","TECA 1354":"Child Growth & Development","TECA 1311":"Educating Young Children",
+ "SPAN 1411":"Beginning Spanish I","SPAN 1412":"Beginning Spanish II","GEOG 1303":"World Regional Geography","SPCH 1311":"Introduction to Speech Communication",
  "PSYC 2306":"Human Sexuality","PSYC 2308":"Child Psychology","PSYC 2315":"Psychology of Adjustment","PSYC 2316":"Psychology of Personality","PSYC 2320":"Abnormal Psychology","PSYC 2330":"Biological Psychology",
  "SOCI 1301":"Introduction to Sociology","SOCI 1306":"Social Problems","ECON 2301":"Principles of Macroeconomics","ECON 2302":"Principles of Microeconomics","SPCH 1315":"Public Speaking","SPCH 1318":"Interpersonal Communication"
 };
@@ -201,7 +211,7 @@ const COM = {
 /* Plans: add more universities or majors here. Each group lists its slots; a slot accepts listed codes and/or a pattern. */
 const PLANS = {
  uhcl:{ name:"University of Houston–Clear Lake", short:"UHCL", majors:{
-  psyc_bs:{ name:"Psychology, B.S.", total:120, cap:75, upper:48, elecMax:18, elecRec:6,
+  psyc_bs:{ field:"Psychology", name:"Psychology, B.S.", total:120, cap:75, upper:48, elecMax:18, elecRec:6,
    sections:[
     {name:"Texas Core Curriculum", hours:42, kind:"core", groups:[
      {name:"Communication", hours:6, slots:[{any:["ENGL 1301"]},{any:["ENGL 1302","ENGL 2311"]}], note:"ENGL 1301, plus ENGL 1302 or 2311. Grade of C- or higher."},
@@ -234,7 +244,7 @@ const PLANS = {
   }
  }},
  twu:{ name:"Texas Woman's University", short:"TWU", majors:{
-  ec6:{ name:"Education B.S., EC-6 Core Subjects (from COM's AAT EC-6)", total:122, elecMax:0,
+  ec6:{ field:"Teaching, EC-6 (AAT)", name:"Education B.S., EC-6 Core Subjects", total:122, elecMax:0,
    sections:[
     {name:"Texas Core Curriculum", hours:42, kind:"core", groups:[
      {name:"Communication", hours:6, slots:[{any:["ENGL 1301"]},{any:["ENGL 1302","ENGL 2311"]}], note:"ENGL 1301 and ENGL 1302. Grade of C or higher in ENGL 1301."},
@@ -272,8 +282,252 @@ const PLANS = {
 };
 const capOf = p => p.cap ?? (p.sections.reduce((a,s)=>a+s.hours,0) + p.elecMax);
 
+/* ---- Shared building blocks for the plans below ---- */
+// The Texas Core transfers as a block, so every school starts from COM's core. Pass notes or slot changes per school.
+function core(o={}){
+  const g = (key, name, hours, slots, note) => ({name, hours, slots:(o[key]&&o[key].slots)||slots, note:(o[key]&&o[key].note)||note});
+  return {name:"Texas Core Curriculum", hours:42, kind:"core", groups:[
+    g("comm","Communication",6,[{any:["ENGL 1301"]},{any:["ENGL 1302","ENGL 2311"]}],"ENGL 1301, plus ENGL 1302 or 2311."),
+    g("math","Mathematics",3,[{any:COM.math}]),
+    g("lps","Life & Physical Sciences",8,[{any:COM.lps},{any:COM.lps}],"Two 4-hour lab sciences."),
+    g("lpc","Language, Philosophy & Culture",3,[{any:COM.lpc}]),
+    g("ca","Creative Arts",3,[{any:COM.ca}]),
+    g("hist","American History",6,[{any:COM.hist},{any:COM.hist}]),
+    g("govt","Government / Political Science",6,[{any:["GOVT 2305"]},{any:["GOVT 2306"]}]),
+    g("sbs","Social & Behavioral Sciences",3,[{any:COM.sbs}]),
+    g("cao","Component Area Option",4,[{any:["PSYC 1300","EDUC 1300"]},{any:["PHED 1164"]}],"At COM: PSYC 1300 or EDUC 1300, plus PHED 1164.")
+  ]};
+}
+const LIT = ["ENGL 2322","ENGL 2323","ENGL 2327","ENGL 2328","ENGL 2332","ENGL 2333","ENGL 2341"];
+const SPAN2 = [{any:["SPAN 1411"]},{any:["SPAN 1412"]}];
+const PSY_OTHER = ["PSYC 2306","PSYC 2308","PSYC 2314","PSYC 2315","PSYC 2316","PSYC 2319","PSYC 2320","PSYC 2330"];
+const psyAny = not => ({re:/^PSYC 2\d{3}$/, not});
+const COLLEGE_MATH = ["MATH 1324","MATH 1325","MATH 1342","MATH 2412","MATH 2413"];
+const ATE = ["UT Austin transfer equivalencies (ATE)","https://utdirect.utexas.edu/apps/adm/ate/"];
+const TAMU_TE = ["Texas A&M transfer course equivalency","https://compass-ssb.tamu.edu/pls/PROD/bwxkwtes.P_TransEquivMain"];
+
+Object.assign(PLANS, {
+ utaustin:{ name:"University of Texas at Austin", short:"UT Austin", majors:{
+  psyc_ba:{ field:"Psychology", name:"Psychology, B.A.", total:120, cap:60, elecMax:0,
+   sections:[
+    core({sbs:{slots:[{any:COM.sbs}], note:"PSYC 2301 can count here or in the major, not both."}}),
+    {name:"Psychology major (lower-division)", hours:9, kind:"fos", groups:[
+     {name:"Introduction to Psychology", hours:3, slots:[{any:["PSYC 2301"]}], note:"Counts as UT PSY 301. Grade of C or higher."},
+     {name:"Statistics for the Behavioral Sciences", hours:3, slots:[{any:["PSYC 2317"]}], note:"UT's PSY 317L. Check UT's transfer equivalency tool, since UT may ask you to take it at UT."},
+     {name:"One more lower-division psychology course", hours:3, show:PSY_OTHER, slots:[psyAny(["PSYC 2301","PSYC 2317"])], note:"UT counts only 3 lower-division PSY hours beyond PSY 301 and 317L."}
+    ]},
+    {name:"B.A. Plan I requirements", hours:23, kind:"fos", groups:[
+     {name:"Foreign language through intermediate level", hours:14, slots:[{any:["SPAN 1411"]},{any:["SPAN 1412"]},{any:["SPAN 2311"]},{any:["SPAN 2312"]}], note:"UT requires intermediate proficiency. A placement or credit-by-exam score can replace some of these courses."},
+     {name:"Sophomore literature", hours:3, slots:[{any:LIT}], note:"UT's E 316L/M/N/P. A second literature course from COM may also fill your core Language, Philosophy & Culture area."},
+     {name:"Additional social science", hours:3, slots:[{any:COM.sbs}], note:"One more social science beyond the core."},
+     {name:"Mathematics beyond college algebra", hours:3, slots:[{any:COLLEGE_MATH}], note:"UT does not count college-algebra-level math (MATH 1314) toward this requirement."}
+    ]}
+   ],
+   electiveShow:[],
+   notes:[
+    "UT requires at least 60 hours in residence at UT, so no more than 60 transfer hours can count toward the 120-hour degree.",
+    "The major is 28 PSY hours, at least 19 upper-division. PSY 420M and at least 6 upper-division PSY hours must be taken at UT.",
+    "A minor is required. Admission to UT as a transfer student is competitive and separate from admission to the major."
+   ],
+   sources:[["UT Psychology B.A. requirements","https://catalog.utexas.edu/undergraduate/liberal-arts/degrees-and-programs/bachelor-of-arts-plan-i/psychology/"],["UT B.A. Plan I requirements","https://catalog.utexas.edu/undergraduate/liberal-arts/degrees-and-programs/bachelor-of-arts-plan-i/"],["UT residence requirement","https://catalog.utexas.edu/undergraduate/the-university/graduation/general-requirements/"],ATE]
+  },
+  ec6:{ field:"Teaching, EC-6 (AAT)", name:"Education B.S.Ed., EC-6 ESL Generalist", total:120, cap:60, elecMax:12,
+   sections:[
+    core(),
+    {name:"COM courses that count in UT's EC-6 plan", hours:11, kind:"fos", groups:[
+     {name:"Foundations of Arithmetic", hours:3, slots:[{any:["MATH 1350"]}], note:"MATH 1350 matches UT's M 316K."},
+     {name:"Foreign language, beginning proficiency", hours:8, slots:SPAN2, note:"UT's plan lists about 10 hours. Two semesters of college Spanish usually meet beginning proficiency."}
+    ]}
+   ],
+   electiveShow:["EDUC 1301","EDUC 2301","MATH 1351","TECA 1354"],
+   notes:[
+    "UT requires at least 60 hours in residence, so no more than 60 transfer hours count.",
+    "Most of UT's EC-6 courses are UT-only, including the Hands-On Science sequence (UTS 306J–M) and the EDC/EDU education courses. Other AAT courses, such as EDUC 1301 and MATH 1351, count only as free electives (12 hours).",
+    "The planner treats MATH 1350 as UT's M 316K. Confirm it in UT's transfer equivalency tool."
+   ],
+   sources:[["UT Education B.S.Ed., EC-6 ESL Generalist","https://catalog.utexas.edu/undergraduate/programs/education-early-childhood-through-grade-six-esl-generalist-bsed/"],["UT residence requirement","https://catalog.utexas.edu/undergraduate/the-university/graduation/general-requirements/"],ATE]
+  }
+ }},
+ tamu:{ name:"Texas A&M University", short:"Texas A&M", majors:{
+  psyc_bs:{ field:"Psychology", name:"Psychology, B.S.", total:120, cap:84, elecMax:15,
+   sections:[
+    core(),
+    {name:"Psychology major (lower-level)", hours:12, kind:"fos", groups:[
+     {name:"Introduction to Psychology", hours:3, slots:[{any:["PSYC 2301"]}], note:"Counts as PBSI 107. Grade of C or higher in all major courses."},
+     {name:"Other lower-level psychology", hours:9, show:PSY_OTHER, slots:[psyAny(["PSYC 2301","PSYC 2317"]),psyAny(["PSYC 2301","PSYC 2317"]),psyAny(["PSYC 2301","PSYC 2317"])], note:"These usually count toward PBSI Requirement III or PBSI electives. PBSI 301 Statistics and 302 Methods are upper-level and taken at A&M."}
+    ]},
+    {name:"Texas A&M B.S. requirements", hours:35, kind:"fos", groups:[
+     {name:"Second math course", hours:3, slots:[{any:COLLEGE_MATH}], note:"A&M's list includes MATH 1324, 1325, 1342 (STAT 201), 2412 and 2413. MATH 1314 does not count for this requirement."},
+     {name:"Additional science", hours:12, slots:[{any:COM.lps},{any:COM.lps},{any:COM.lps}], note:"The degree asks for 21 science hours in all. Lab sciences at COM are 4 hours each."},
+     {name:"Two literature courses", hours:6, slots:[{any:LIT},{any:LIT}]},
+     {name:"One more Language, Philosophy & Culture or Creative Arts", hours:3, slots:[{any:[...COM.lpc,...COM.ca]}]},
+     {name:"Second social & behavioral science", hours:3, slots:[{any:COM.sbs}]},
+     {name:"Foreign language (two semesters)", hours:8, slots:SPAN2, note:"Not needed if you took two years of the same language in high school."}
+    ]}
+   ],
+   electiveShow:["SPCH 1315","SOCI 1306","ECON 2301"],
+   notes:[
+    "The degree is 120 hours with at least 36 hours of 300–400 level courses, which must be taken at A&M.",
+    "A&M does not publish a fixed transfer-hour limit for this degree. Because 36 upper-level hours must be taken at A&M, this planner counts at most 84 transfer hours.",
+    "Admission to A&M as a transfer student is competitive. Check A&M's transfer course equivalency site for each course."
+   ],
+   sources:[["Texas A&M Psychology B.S. degree plan","https://artsci.tamu.edu/psychological-brain-sciences/_files/_documents/degree-planner/bs-psyc-degree-plan.pdf"],["San Jacinto College map to Texas A&M Psychology","https://publications.sanjac.edu/map-tamu-psyc-bsft/"],TAMU_TE]
+  },
+  ec6:{ field:"Teaching, EC-6 (AAT)", name:"Education B.S., EC-6 Core Subjects", total:123, elecMax:0,
+   sections:[
+    core({math:{slots:[{any:COM.math}], note:"A&M asks for two core math courses (6 hours). The second one is below."}, hist:{slots:[{any:["HIST 1301","HIST 1302"]},{any:["HIST 2301"]}], note:"Take HIST 2301 Texas History. It matches A&M's required HIST 226."}}),
+    {name:"Texas A&M lower-level requirements", hours:11, kind:"fos", groups:[
+     {name:"Second core math", hours:3, slots:[{any:COM.math}], note:"Both math courses need a C or higher for admission to teacher education."},
+     {name:"Foreign language (two semesters)", hours:8, slots:SPAN2, note:"Not needed if you took two years of the same language in high school."}
+    ]}
+   ],
+   electiveShow:[],
+   notes:[
+    "A&M's 123-hour plan has no free electives, and several education courses must be taken at A&M: INST 222, TEFB 273, and MATH 365 and 366 (A&M's math for teachers). AAT courses such as EDUC 1301, EDUC 2301 and MATH 1350/1351 may not apply. Check each one with A&M's transfer equivalency site.",
+    "Admission to the education program requires 60 hours that count toward the degree, a 2.75 GPA, and C or higher in core math, core science and English composition."
+   ],
+   sources:[["Texas A&M EC-6 Core Subjects degree plan","https://tlac.tamu.edu/wp-content/uploads/2024/02/PK6-202431-Degree-Plan-Packet-Website-Version.pdf"],TAMU_TE]
+  }
+ }},
+ txstate:{ name:"Texas State University", short:"Texas State", majors:{
+  psyc_ba:{ field:"Psychology", name:"Psychology, B.A.", total:120, cap:72, elecMax:12,
+   sections:[
+    core({math:{note:"Texas State recommends MATH 1314, 1324, 1325, 2412 or 2413."}, sbs:{note:"Texas State recommends SOCI 1301 or ECON here, so PSYC 2301 can count in the major."}, lps:{note:"Texas State recommends two biology courses."}}),
+    {name:"Psychology courses that transfer", hours:18, kind:"fos", groups:[
+     {name:"Introduction to Psychology", hours:3, slots:[{any:["PSYC 2301"]}], note:"Counts as PSY 1300."},
+     {name:"Statistics", hours:3, slots:[{any:["PSYC 2317"]}], note:"Counts as PSY 2301."},
+     {name:"Approved psychology substitutions", hours:12, show:["PSYC 2306","PSYC 2314","PSYC 2319","PSYC 2320","PSYC 2330"], slots:[0,1,2,3].map(()=>({any:["PSYC 2306","PSYC 2314","PSYC 2319","PSYC 2320","PSYC 2330"]})), note:"Texas State accepts these as substitutes for some major courses (for example PSYC 2319 for PSY 3331)."}
+    ]},
+    {name:"B.A. requirements", hours:18, kind:"fos", groups:[
+     {name:"Modern language through sophomore level", hours:14, slots:[{any:["SPAN 1411"]},{any:["SPAN 1412"]},{any:["SPAN 2311"]},{any:["SPAN 2312"]}]},
+     {name:"Additional science or math", hours:4, slots:[{any:[...COM.lps,...COLLEGE_MATH]}], note:"Any biology, chemistry, geology, physics or math course except MATH 1314 and 1332."}
+    ]}
+   ],
+   electiveShow:["SPCH 1315","SOCI 1306"],
+   notes:[
+    "Texas State applies up to 72 hours from a community college toward a degree.",
+    "The degree needs at least 36 advanced (3000–4000) hours, 24 of them at Texas State, including 18 advanced PSY hours.",
+    "Transfer GPA: 2.25 or higher with 30+ transferable hours."
+   ],
+   sources:[["Texas State Psychology B.A. Transfer Planning Guide 2025–26","https://docs.gato.txst.edu/754945/psychology-ba-tpg-2025-26.docx"]]
+  },
+  ec6:{ field:"Teaching, EC-6 (AAT)", name:"Education B.S., Elementary EC-6 with ESL", total:120, cap:72, elecMax:6,
+   sections:[
+    core({math:{slots:[{any:["MATH 1314","MATH 1324","MATH 1325","MATH 2412","MATH 2413"]}], note:"Texas State does not recommend MATH 1332, 1342 or 1442 for this degree."},
+          lps:{note:"Texas State recommends one physics course and one biology course."},
+          sbs:{note:"Texas State recommends GEOG 1303 or ANTH 2351, which are not in COM's core. Any COM social science still completes the core."}}),
+    {name:"AAT EC-6 courses that count in the major", hours:12, kind:"fos", groups:[
+     {name:"Mathematics for Teachers I & II", hours:6, slots:[{any:["MATH 1350"]},{any:["MATH 1351"]}], note:"Count as MATH 2311 and 2312."},
+     {name:"Introduction to the Teaching Profession", hours:3, slots:[{any:["EDUC 1301"]}], note:"Counts as CI 2310."},
+     {name:"Introduction to Special Populations", hours:3, slots:[{any:["EDUC 2301"]}], note:"Approved substitution for RDG 4320."}
+    ]}
+   ],
+   electiveShow:["TECA 1354","HIST 2301"],
+   notes:[
+    "Texas State applies up to 72 community college hours.",
+    "Educator Preparation admission requires C or higher in composition, math, language/philosophy/culture, history and government, and a B or higher in your speech course (SPCH 1315 or 1318).",
+    "Graduation requires a 2.75 overall GPA and a C or higher in all major courses. The 120-hour total is this planner's assumption. Confirm it in the Texas State catalog."
+   ],
+   sources:[["Texas State Elementary Education EC-6 ESL Transfer Planning Guide 2025–26","https://docs.gato.txst.edu/754845/education-elementary-education-teacher-cert-ec6-esl-bs-tpg-2025-26.docx"]]
+  }
+ }},
+ uh:{ name:"University of Houston", short:"UH", majors:{
+  psyc_bs:{ field:"Psychology", name:"Psychology, B.S.", total:120, cap:66, elecMax:15,
+   sections:[
+    core(),
+    {name:"Psychology major (lower-level)", hours:15, kind:"fos", groups:[
+     {name:"Lifespan Growth & Development", hours:3, slots:[{any:["PSYC 2314"]}]},
+     {name:"Statistical Methods in Psychology", hours:3, slots:[{any:["PSYC 2317"]}]},
+     {name:"Social Psychology", hours:3, slots:[{any:["PSYC 2319"]}]},
+     {name:"Psychology of Personality", hours:3, slots:[{any:["PSYC 2316"]}]},
+     {name:"Biological Psychology", hours:3, slots:[{any:["PSYC 2330"]}], note:"UH's map schedules this at UH."}
+    ]},
+    {name:"UH B.S. and CLASS requirements", hours:12, kind:"fos", groups:[
+     {name:"B.S. additional math", hours:6, slots:[{any:["MATH 1314",...COLLEGE_MATH]},{any:["MATH 1314",...COLLEGE_MATH]}], note:"The B.S. needs 12 hours of approved math in all, counting your core math course. Any college-level math counts."},
+     {name:"CLASS block", hours:6, show:["SPCH 1315","ECON 2301","SOCI 1301","PHIL 1301","SPAN 1411"], slots:[{re:/^(SPCH|ECON|ENGL|HIST|PHIL|SOCI|SPAN|GOVT) [12]\d{3}$/, not:["ENGL 2311"]},{re:/^(SPCH|ECON|ENGL|HIST|PHIL|SOCI|SPAN|GOVT) [12]\d{3}$/, not:["ENGL 2311"]}], note:"Two courses from two different fields outside psychology, not used anywhere else."}
+    ]}
+   ],
+   electiveShow:["PSYC 2308","PSYC 2320","SOCI 1306"],
+   notes:[
+    "UH accepts up to 66 lower-level transfer hours toward a bachelor's degree, and no more than 2 hours of physical activity courses.",
+    "All PSYC courses need a C or better. COM courses need a C- or better to transfer.",
+    "A minor is required. UH's UH Next program offers guaranteed pathways for students transferring from partner colleges."
+   ],
+   sources:[["UH Next Psychology B.S. degree map (2025–26)","https://www.uh.edu/class/uh-next/degree-maps/acc/2025/psychology_bs_2-2-map-ac.pdf"],["San Jacinto College map to UH Psychology B.S.","https://publications.sanjac.edu/map-uh-main-psyc-bsft/"]]
+  },
+  ec6:{ field:"Teaching, EC-6 (AAT)", name:"Teaching & Learning B.S., EC-6 Generalist", total:130, cap:66, elecMax:3,
+   sections:[
+    core({math:{note:"UH recommends MATH 1332 for core math."}, lps:{note:"UH recommends biology, chemistry and geology."}}),
+    {name:"AAT and lower-level courses UH uses", hours:25, kind:"fos", groups:[
+     {name:"Introduction to the Teaching Profession", hours:3, slots:[{any:["EDUC 1301"]}]},
+     {name:"Introduction to Special Populations", hours:3, slots:[{any:["EDUC 2301"]}]},
+     {name:"Mathematics for Teachers I & II", hours:6, slots:[{any:["MATH 1350"]},{any:["MATH 1351"]}]},
+     {name:"Statistics", hours:3, slots:[{any:["MATH 1342"]}]},
+     {name:"Child development", hours:3, slots:[{any:["TECA 1354","PSYC 2308","PSYC 2314"]}], note:"UH's map lists PSYC 2308 or a human development course."},
+     {name:"Educating Young Children", hours:3, slots:[{any:["TECA 1311"]}]},
+     {name:"Third science", hours:4, slots:[{any:COM.lps}], note:"UH's map uses three sciences: biology, chemistry and geology."}
+    ]}
+   ],
+   electiveShow:[],
+   notes:[
+    "UH accepts up to 66 lower-level transfer hours.",
+    "This degree plan includes ESL and Special Education supplemental certifications and totals 130 hours on UH's map.",
+    "Formal admission to UH's teacher education program is required before the junior-year pre-teaching semester. Course matches above combine UH's map with San Jacinto College's transfer map. Confirm them with a UH advisor."
+   ],
+   sources:[["UH Teaching & Learning EC-6 four-year map","https://uh.edu/retention-graduation-initiatives/uhin4/maps/_maps-documents/2024-205/coe-teaching-and-learning-ec-6-generalist-esl-sped-supp-bs.pdf"],["San Jacinto College map to UH Teaching EC-6","https://publications.sanjac.edu/map-uh-main-teach-ec6-bsft/"]]
+  }
+ }},
+ uhd:{ name:"University of Houston–Downtown", short:"UHD", majors:{
+  psyc_bs:{ field:"Psychology", name:"Psychology, B.S.", total:120, cap:60, elecMax:12,
+   sections:[
+    core({sbs:{note:"PSYC 2301 can count here or in the major, not both."}}),
+    {name:"Psychology major and support (lower-level)", hours:18, kind:"fos", groups:[
+     {name:"General Psychology", hours:3, slots:[{any:["PSYC 2301"]}], note:"Counts as PSY 1303."},
+     {name:"Lifespan Growth & Development", hours:3, slots:[{any:["PSYC 2314"]}], note:"Counts as PSY 2310 (developmental cluster)."},
+     {name:"Social Psychology", hours:3, slots:[{any:["PSYC 2319"]}], note:"Counts as PSY 2302 (social/personality cluster)."},
+     {name:"Statistical Methods in Psychology", hours:3, slots:[{any:["PSYC 2317"]}]},
+     {name:"Statistics", hours:3, slots:[{any:["MATH 1342"]}], note:"Counts as STAT 2300."},
+     {name:"Introduction to Sociology", hours:3, slots:[{any:["SOCI 1301"]}], note:"Counts as SOC 1303."}
+    ]}
+   ],
+   electiveShow:["PSYC 2320","PSYC 2330","SOCI 1306"],
+   notes:[
+    "The degree is 120 hours. UHD's transfer map leaves about 60 upper-level hours to take at UHD, so this planner counts at most 60 transfer hours.",
+    "Admission to the major requires a 2.5 GPA.",
+    "UHD's degree also requires an anthropology course (ANTH 2301 or 2302). COM does not offer anthropology, so plan to take it at UHD.",
+    "UHD's psychology transfer map with course equivalents dates from 2021–22. Confirm matches with a UHD advisor."
+   ],
+   sources:[["UHD Psychology B.S. course sequence map (2025–26)","https://www.uhd.edu/academics/advising/2025-degree-maps/2025-course-sequencing-sb25-maps/course-sequence-map-bs-pyschology-7-28-25.pdf"],["UHD transfer map: AA to B.S. Psychology","https://www.uhd.edu/documents/admissions/transfer/lsc/20212022/aa-to-uhd-bs-psychology-21-22.pdf"]]
+  },
+  ec6:{ field:"Teaching, EC-6 (AAT)", name:"Education B.A., EC-6 with ESL", total:126, elecMax:0,
+   sections:[
+    core({math:{slots:[{any:["MATH 1314"]}], note:"MATH 1314 is required for the AAT and is a prerequisite for MATH 1350 and 1351."},
+          lps:{slots:[{any:["BIOL 1408","CHEM 1405"]},{any:["BIOL 1408","CHEM 1405"]}], note:"UHD's map uses BIOL 1408 and CHEM 1405."},
+          ca:{slots:[{any:["ARTS 1301","ARTS 1303","ARTS 1304","DRAM 1310","MUSI 1306"]}], note:"UHD recommends ARTS 1301, 1303, 1304, DRAM 1310 or MUSI 1306."}}),
+    {name:"AAT EC-6 courses UHD uses", hours:25, kind:"fos", groups:[
+     {name:"Introduction to the Teaching Profession", hours:3, slots:[{any:["EDUC 1301"]}], note:"Counts as SOSE 3306."},
+     {name:"Introduction to Special Populations", hours:3, slots:[{any:["EDUC 2301"]}], note:"Counts as PED 3301."},
+     {name:"Mathematics for Teachers I & II", hours:6, slots:[{any:["MATH 1350"]},{any:["MATH 1351"]}], note:"Count as MATH 3321 and 3322."},
+     {name:"Texas History", hours:3, slots:[{any:["HIST 2301"]}]},
+     {name:"General Psychology", hours:3, slots:[{any:["PSYC 2301"]}]},
+     {name:"Third science", hours:4, slots:[{any:["PHYS 1410"]}], note:"Counts as PHYS 1307 Elementary Physics."},
+     {name:"Child Growth & Development", hours:3, slots:[{any:["TECA 1354"]}], note:"Not required for the AAT, but UHD's degree uses it."}
+    ]}
+   ],
+   electiveShow:[],
+   notes:[
+    "Completing the AAT makes you core complete at UHD and guarantees junior standing.",
+    "UHD's degree also uses TECA 1303 Family, School & Community. COM does not offer it, so plan to take UHD's ECH 2313 after you transfer.",
+    "Teacher education admission requires a 2.5 GPA, an application and interview, and C or higher in composition, math, science and the American history/government courses.",
+    "The 126-hour total comes from UHD's transfer map. It covers both the transfer courses and the hours at UHD."
+   ],
+   sources:[["UHD transfer map: AAT to B.A. Education EC-6 ESL (2025–26)","https://uhdomni1.oudeve.com/documents/admissions/transfer/lsc/2025-2026/aat-to-uhd-ba-education-ec-6-esl-4-2025.pdf"]]
+  }
+ }}
+});
+
 const EXAMPLE = ["ENGL 1301","ENGL 1302","MATH 1314","HIST 1301","PSYC 1300","PSYC 2301","GOVT 2305","BIOL 1408","SPCH 1315","ARTS 1301"];
-const KEY = "com-transfer-planner";
+const KEY = "com-transfer-planner-v2"; // new key so lists saved by older versions are ignored
 let state = { uni:"uhcl", major:"psyc_bs", courses:[...EXAMPLE], example:true };
 try{ const s = JSON.parse(localStorage.getItem(KEY)||"null"); if(s && Array.isArray(s.courses)) state = {...state, ...s}; }catch(e){}
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} };
@@ -281,7 +535,29 @@ const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(state)); }cat
 const $ = id => document.getElementById(id);
 const hrs = c => { const m = c.match(/ (\d)(\d)\d\d$/); return m ? +m[2] : 0; };
 const collegeLevel = c => /^[A-Z]{3,4} [12]\d{3}$/.test(c);
-const norm = s => { const m = s.toUpperCase().replace(/[^A-Z0-9]/g,"").match(/^([A-Z]{3,4})(\d{4})$/); return m ? m[1]+" "+m[2] : null; };
+// Accepts "PSYC 2301", "psyc2301", "PSYC-2301 General Psychology", "2301" or part of a title
+function resolveCourse(raw){
+  const up = raw.toUpperCase();
+  const m = up.match(/\b([A-Z]{3,4})\s*-?\s*(\d{4})\b/);
+  if(m) return {code: m[1]+" "+m[2]};
+  const known = [...new Set([...Object.keys(OFFERED), ...Object.keys(T)])];
+  const list = xs => xs.slice(0,4).join(", ") + (xs.length>4 ? " and others" : "");
+  if(/^\d{4}$/.test(raw.trim())){
+    const hits = known.filter(c=>c.endsWith(" "+raw.trim()));
+    if(hits.length===1) return {code:hits[0]};
+    if(hits.length>1) return {err:`Several courses use ${raw.trim()}: ${list(hits)}. Add the subject, like ${hits[0]}.`};
+    return {err:`No course numbered ${raw.trim()} found. Add the subject, like PSYC 2301.`};
+  }
+  const nt = x => x.toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+  const q = nt(raw);
+  if(q.length < 3) return {err:"Type a course number, like PSYC 2301, or a longer part of the title."};
+  const exact = known.filter(c=>nt(title(c))===q);
+  if(exact.length===1) return {code:exact[0]};
+  const hits = known.filter(c=>nt(title(c)).includes(q));
+  if(hits.length===1) return {code:hits[0]};
+  if(hits.length>1) return {err:`Several courses match: ${list(hits)}. Type the course number.`};
+  return {err:"No matching course found. Type the subject and number, like PSYC 2301."};
+}
 const fits = (slot,c) => (slot.any && slot.any.includes(c)) || (slot.re && slot.re.test(c) && !(slot.not||[]).includes(c));
 const plan = () => PLANS[state.uni].majors[state.major];
 
@@ -298,7 +574,8 @@ function evaluate(){
     }
     return false;
   };
-  slots.forEach((_,i)=>tryAssign(i,new Set()));
+  // Fill major slots first, so a course like PSYC 2301 counts in the major and the core slot stays open for another COM course
+  slots.map((s,i)=>i).sort((x,y)=>(slots[x].kind==="core")-(slots[y].kind==="core")).forEach(i=>tryAssign(i,new Set()));
   const result = {}; let core=0, fos=0, elec=0;
   for(const c of state.courses){
     if(!collegeLevel(c)){ result[c]={tag:"no",label:"Not college-level"}; continue; }
@@ -314,28 +591,40 @@ function evaluate(){
 
 function chip(c){
   const on = state.courses.includes(c);
-  return `<button type="button" class="chip" data-c="${c}" aria-pressed="${on}" title="${T[c]||c}">${c}</button>`;
+  return `<button type="button" class="chip" data-c="${c}" aria-pressed="${on}" title="${title(c)}">${c}</button>`;
 }
 
 function render(){
   const p = plan(), u = PLANS[state.uni], ev = evaluate();
   const entered = state.courses.filter(collegeLevel).reduce((a,c)=>a+hrs(c),0);
-  const cap = capOf(p), comLeft = cap - ev.applied, left = p.total - ev.applied, uh = p.total - cap;
+  const cap = capOf(p), left = p.total - ev.applied;
+  // How many more hours a student could still take at COM: open requirement slots COM can fill, plus elective room, up to the transfer limit
+  const used = new Set(state.courses), groupInfo = {};
+  let comRoom = Math.max(0, p.elecMax - ev.elec);
+  p.sections.forEach((sec,si)=>sec.groups.forEach((g,gi)=>{
+    const n = state.courses.filter(c=>{const r=ev.result[c];return r.si===si&&r.gi===gi;}).length;
+    const open = Math.max(0, g.slots.length - n);
+    const cand = Object.keys(OFFERED).filter(c=>!used.has(c) && g.slots.some(sl=>fits(sl,c)));
+    const atC = Math.min(open, cand.length);
+    groupInfo[si+"-"+gi] = {open, atC};
+    comRoom += atC * (g.hours / g.slots.length);
+  }));
+  const comLeft = Math.max(0, Math.min(cap - ev.applied, Math.round(comRoom))), uh = p.total - ev.applied - comLeft;
   $("fEntered").textContent = entered;
   $("fApplied").textContent = ev.applied; $("fAppliedSub").textContent = `of ${cap} that fit the plan`;
   $("tMid").textContent = Math.round(p.total/2);
   $("fCom").textContent = comLeft;
   $("fLeft").textContent = left; $("fLeftSub").textContent = `of ${p.total} hours`;
   $("b1").style.width = ev.applied/p.total*100+"%"; $("b2").style.width = comLeft/p.total*100+"%"; $("b3").style.width = uh/p.total*100+"%";
-  $("tEnd").textContent = p.total+" hrs"; $("lgU").textContent = `At ${u.short} (at least ${uh})`;
-  $("bar").setAttribute("aria-label",`${ev.applied} hours count, ${comLeft} more can be taken at COM, at least ${uh} at ${u.short}`);
+  $("tEnd").textContent = p.total+" hrs"; $("lgU").textContent = `At ${u.short} (${uh} or more)`;
+  $("bar").setAttribute("aria-label",`${ev.applied} hours count, ${comLeft} more can be taken at COM, ${uh} or more at ${u.short}`);
   $("planTitle").textContent = `${u.short} ${p.name} degree plan`;
   $("exampleBar").hidden = !state.example;
 
   // course list
   const tagCls = {core:"t-core",fos:"t-fos",el:"t-el",no:"t-no"};
   $("clist").innerHTML = state.courses.map(c=>{ const r=ev.result[c];
-    return `<li><span class="code">${c}</span><span class="ttl">${T[c]||"Course"}<em>${r.label}</em></span><span class="tag ${tagCls[r.tag]}">${r.tag==="core"?"Core":r.tag==="fos"?"Major":r.tag==="el"?"Elective":"Won't count"}</span><button type="button" class="x" data-rm="${c}" aria-label="Remove ${c}">×</button></li>`}).join("");
+    return `<li data-row="${c}"><span class="code">${c}</span><span class="ttl">${title(c)}<em>${r.label}</em></span><span class="tag ${tagCls[r.tag]}">${r.tag==="core"?"Core":r.tag==="fos"?"Major":r.tag==="el"?"Elective":"Won't count"}</span><button type="button" class="x" data-rm="${c}" aria-label="Remove ${c}">×</button></li>`}).join("");
   $("clistEmpty").hidden = state.courses.length>0;
 
   // plan
@@ -347,20 +636,28 @@ function render(){
       const filled = state.courses.filter(c=>{const r=ev.result[c];return r.si===si&&r.gi===gi;});
       const n = filled.length, need = g.slots.length;
       const cls = n>=need?"done":n>0?"part":"";
-      const opts = g.show || [...new Set(g.slots.flatMap(s=>s.any||[]))];
+      const opts = (g.show || [...new Set(g.slots.flatMap(s=>s.any||[]))]).filter(atCOM);
       const extra = filled.filter(c=>!opts.includes(c));
+      const gi2 = groupInfo[si+"-"+gi];
       html += `<div class="req ${cls}"><span class="dot"></span><h4>${g.name}</h4><span class="meta">${filled.reduce((a,c)=>a+hrs(c),0)} / ${g.hours} hrs</span>`;
       if(g.note) html += `<p>${g.note}</p>`;
-      if(n<need) html += `<span class="need">Still need ${need-n} course${need-n>1?"s":""}</span>`;
-      html += `<div class="chips">${[...extra,...opts].map(chip).join("")}</div></div>`;
+      if(n<need){
+        const k = need-n, s = k>1?"s":"";
+        if(gi2.atC===0) html += `<span class="need uni">Not offered at COM. Take ${k>1?"these":"this"} at ${u.short}.</span>`;
+        else if(gi2.atC<k) html += `<span class="need">Still need ${k} course${s}: ${gi2.atC} at COM, the rest at ${u.short}</span>`;
+        else html += `<span class="need">Still need ${k} course${s}</span>`;
+      }
+      const chipList = [...extra,...opts];
+      if(chipList.length) html += `<div class="chips">${chipList.map(chip).join("")}</div>`;
+      html += `</div>`;
     });
     html += `</div>`;
   });
   const els = state.courses.filter(c=>ev.result[c].tag==="el");
   if(p.elecMax) html += `<div class="plan-sec"><div class="sec-h"><h3>General electives</h3><span>${ev.elec} / ${p.elecMax} hrs</span></div>
     <div class="req ${ev.elec>0?"done":""}"><span class="dot"></span><h4>Any other college-level courses</h4><span class="meta">${ev.elec} hrs</span>
-    <p>Up to ${p.elecMax} hours transfer here. ${u.short} recommends ${p.elecRec} or fewer so you can add a minor.</p>
-    <div class="chips">${[...els.filter(c=>!p.electiveShow.includes(c)),...p.electiveShow].map(chip).join("")}</div></div></div>`;
+    <p>Up to ${p.elecMax} hours transfer here.${p.elecRec?` ${u.short} recommends ${p.elecRec} or fewer so you can add a minor.`:""}</p>
+    <div class="chips">${[...els.filter(c=>!p.electiveShow.includes(c)),...p.electiveShow.filter(atCOM)].map(chip).join("")}</div></div></div>`;
   $("plan").innerHTML = html;
 
   $("notes").innerHTML = p.notes.map(n=>`<li>${n}</li>`).join("") +
@@ -368,33 +665,66 @@ function render(){
   save();
 }
 
+// The example courses aren't the student's own, so the first add or tap starts a fresh list
+function leaveExample(){ if(state.example){ state.example=false; state.courses=[]; } }
 function toggle(c){
-  if(state.example){ state.example=false; }
+  leaveExample();
   const i = state.courses.indexOf(c);
   if(i>=0) state.courses.splice(i,1); else state.courses.push(c);
   render();
 }
 
-// setup
-$("uni").innerHTML = Object.entries(PLANS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
-function fillMajors(){ const m = PLANS[state.uni].majors;
-  $("major").innerHTML = Object.entries(m).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
-  if(!m[state.major]) state.major = Object.keys(m)[0];
-  $("major").value = state.major; }
-$("uni").value = state.uni; fillMajors();
-$("uni").addEventListener("change",e=>{state.uni=e.target.value;fillMajors();render();});
-$("major").addEventListener("change",e=>{state.major=e.target.value;render();});
-$("courseList").innerHTML = Object.keys(T).sort().map(c=>`<option value="${c}">${T[c]}</option>`).join("");
+// setup: choose a major (field) first, then a university that offers it
+const OFFERS = []; // {field, uni, major, label}
+for(const [uk,u] of Object.entries(PLANS)) for(const [mk,m] of Object.entries(u.majors))
+  OFFERS.push({field:m.field||m.name, uni:uk, major:mk, uniName:u.name, progName:m.name});
+const FIELDS = [...new Set(OFFERS.map(o=>o.field))].sort();
+if(!PLANS[state.uni] || !PLANS[state.uni].majors[state.major]){ state.uni = OFFERS[0].uni; state.major = OFFERS[0].major; }
+state.field = PLANS[state.uni].majors[state.major].field || PLANS[state.uni].majors[state.major].name;
 
-$("addForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  const raw = $("addInput").value.trim(), c = norm(raw);
-  if(!c){ $("addErr").textContent = "Enter a course as subject and number, like PSYC 2301."; return; }
-  if(state.courses.includes(c)){ $("addErr").textContent = `${c} is already on your list.`; return; }
-  if(state.example){ state.example=false; }
-  state.courses.push(c); $("addInput").value=""; $("addErr").textContent = collegeLevel(c) ? "" : `${c} is not a college-level course, so it won't transfer.`;
+function fillUnis(){
+  const list = OFFERS.filter(o=>o.field===state.field).sort((a,b)=>a.uniName.localeCompare(b.uniName));
+  $("uni").innerHTML = list.map(o=>`<option value="${o.uni}|${o.major}">${o.uniName} (${o.progName})</option>`).join("");
+  if(!list.some(o=>o.uni===state.uni && o.major===state.major)){ state.uni = list[0].uni; state.major = list[0].major; }
+  $("uni").value = state.uni+"|"+state.major;
+  $("uniHint").textContent = `Offered at ${list.length} universit${list.length===1?"y":"ies"} in this planner`;
+}
+$("major").innerHTML = FIELDS.map(f=>{
+  const n = OFFERS.filter(o=>o.field===f).length;
+  return `<option value="${f}">${f} (${n} school${n===1?"":"s"})</option>`;
+}).join("");
+$("major").value = state.field; fillUnis();
+$("major").addEventListener("change",e=>{state.field=e.target.value;fillUnis();render();});
+$("uni").addEventListener("change",e=>{[state.uni,state.major]=e.target.value.split("|");render();});
+$("courseList").innerHTML = Object.keys(OFFERED).sort().map(c=>`<option value="${c}">${title(c)}</option>`).join("");
+
+// Add a course without relying on form submission, which some embedded viewers block
+function addCourse(){ try{ addCourseInner(); }catch(err){ $("addErr").textContent = "Something went wrong adding that course: " + err.message; } }
+$("addBtn").addEventListener("click", addCourse);
+$("addInput").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); addCourse(); } });
+function addCourseInner(){
+  const raw = $("addInput").value.trim();
+  if(!raw){ $("addErr").textContent = "Type a course number, like PSYC 2301, or a course title."; return; }
+  const r = resolveCourse(raw);
+  if(r.err){ $("addErr").textContent = r.err; return; }
+  const c = r.code;
+  leaveExample();
+  if(state.courses.includes(c)){
+    render();
+    const where = evaluate().result[c];
+    $("addErr").textContent = `${c} is already on your list${where && where.label ? ` (it counts as ${where.label})` : ""}.`;
+    $("addInput").value = "";
+    const row = document.querySelector(`[data-row="${c}"]`);
+    if(row){ row.classList.add("flash"); row.scrollIntoView({block:"nearest", behavior:"smooth"}); setTimeout(()=>row.classList.remove("flash"),1600); }
+    return;
+  }
+  state.courses.push(c); $("addInput").value="";
+  $("addErr").textContent = !collegeLevel(c) ? `${c} is not a college-level course, so it won't transfer.`
+    : !atCOM(c) ? `Added ${c}. COM doesn't offer it, so it's counted as a course you took at another college.` : `Added ${c} ${title(c)}.`;
   render();
-});
+  const row = document.querySelector(`[data-row="${c}"]`);
+  if(row){ row.classList.add("flash"); setTimeout(()=>row.classList.remove("flash"),1600); }
+}
 document.addEventListener("click",e=>{
   const ch = e.target.closest("[data-c]"); if(ch){ toggle(ch.dataset.c); return; }
   const rm = e.target.closest("[data-rm]"); if(rm){ toggle(rm.dataset.rm); }
