@@ -304,7 +304,7 @@ const PSY_OTHER = ["PSYC 2306","PSYC 2308","PSYC 2314","PSYC 2315","PSYC 2316","
 const psyAny = not => ({re:/^PSYC 2\d{3}$/, not});
 const COLLEGE_MATH = ["MATH 1324","MATH 1325","MATH 1342","MATH 2412","MATH 2413"];
 const ATE = ["UT Austin transfer credit search (ATE, no login)","https://utdirect.utexas.edu/nlogon/adm/ate/search2.WBX"];
-const TAMU_TE = ["Texas A&M transfer course equivalency","https://howdy.tamu.edu/uPortal/p/tce-ui/max"];
+const TAMU_TE = ["Texas A&M transfer student resources and course sheets","https://admissions.tamu.edu/resources/future-students/transfer-students.html"];
 
 Object.assign(PLANS, {
  utaustin:{ name:"University of Texas at Austin", short:"UT Austin", majors:{
@@ -369,7 +369,7 @@ Object.assign(PLANS, {
    notes:[
     "The degree is 120 hours with at least 36 hours of 300–400 level courses, which must be taken at A&M.",
     "A&M does not publish a fixed transfer-hour limit for this degree. Because 36 upper-level hours must be taken at A&M, this planner counts at most 84 transfer hours.",
-    "Admission to A&M as a transfer student is competitive. Check A&M's transfer course equivalency site for each course."
+    "Admission to A&M as a transfer student is competitive. A&M's transfer course sheets list the courses each major expects."
    ],
    sources:[["Texas A&M Psychology B.S. degree plan","https://artsci.tamu.edu/psychological-brain-sciences/_files/_documents/degree-planner/bs-psyc-degree-plan.pdf"],["San Jacinto College map to Texas A&M Psychology","https://publications.sanjac.edu/map-tamu-psyc-bsft/"],TAMU_TE]
   },
@@ -383,7 +383,7 @@ Object.assign(PLANS, {
    ],
    electiveShow:[],
    notes:[
-    "A&M's 123-hour plan has no free electives, and several education courses must be taken at A&M: INST 222, TEFB 273, and MATH 365 and 366 (A&M's math for teachers). AAT courses such as EDUC 1301, EDUC 2301 and MATH 1350/1351 may not apply. Check each one with A&M's transfer equivalency site.",
+    "A&M's 123-hour plan has no free electives, and several education courses must be taken at A&M: INST 222, TEFB 273, and MATH 365 and 366 (A&M's math for teachers). AAT courses such as EDUC 1301, EDUC 2301 and MATH 1350/1351 may not apply. Check each one with A&M's Course Equivalency search (linked from A&M's transfer admissions pages).",
     "Admission to the education program requires 60 hours that count toward the degree, a 2.75 GPA, and C or higher in core math, core science and English composition."
    ],
    sources:[["Texas A&M EC-6 Core Subjects degree plan","https://tlac.tamu.edu/wp-content/uploads/2024/02/PK6-202431-Degree-Plan-Packet-Website-Version.pdf"],TAMU_TE]
